@@ -4,28 +4,61 @@ Notes:
 - Main Screen
  */
 
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, FlatList } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Button from "../components/Button";
+import WalkerCard from "../components/WalkerCard";
+
+const WALKERS = [
+  {
+    id: "w1",
+    name: "Alex",
+    rating: 4.8,
+    walks: 120,
+    price: 35,
+    photo: "https://randomuser.me/api/portraits/men/32.jpg",
+    bio: "Trail runner & dog whisperer. Loves long alpine walks.",
+    isAvailable: true,
+  },
+  {
+    id: "w2",
+    name: "Maya",
+    rating: 5,
+    walks: 210,
+    price: 40,
+    photo: "https://randomuser.me/api/portraits/women/65.jpg",
+    bio: "Gentle training approach, specializes in high-energy dogs.",
+    isAvailable: false,
+  },
+];
 
 export default function HomeScreen() {
-  const navigation = useNavigation(); //using instead of props
+  const navigation = useNavigation();
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.h1}>Happy Dogs. Happy Adventures.</Text>
-      <Text style={styles.sub}>
-        Mountain-loving dog walks & sitting — now as a mobile app.
-      </Text>
+      <Text style={styles.h1}>Find Your Mountain Walker</Text>
+      <Text style={styles.sub}>Trusted locals with great reviews.</Text>
 
-      <View style={{ height: 12 }} />
+      <FlatList
+        data={WALKERS}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingVertical: 12 }}
+        renderItem={({ item }) => (
+          <WalkerCard
+            {...item}
+            onPress={() => navigation.navigate("Booking", { walker: item })}
+          />
+        )}
+      />
+
       <Button title="Book Now" onPress={() => navigation.navigate("Booking")} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, padding: 20, justifyContent: "center", gap: 8 },
+  wrap: { flex: 1, padding: 20, paddingTop: 24, backgroundColor: "#fafafa" },
   h1: { fontSize: 22, fontWeight: "800" },
-  sub: { color: "#555" },
+  sub: { color: "#555", marginBottom: 8 },
 });

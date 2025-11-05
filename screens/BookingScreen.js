@@ -1,15 +1,25 @@
-/**
+/*
 screens/BookingScreen.js
-Notes: Form
+Notes: Displays the booking form and selected walker info.
  */
-
 import { View, Text, StyleSheet } from "react-native";
+import { useRoute } from "@react-navigation/native";
 
 export default function BookingScreen() {
+  const route = useRoute();
+  const selected = route.params?.walker;
+
   return (
     <View style={styles.wrap}>
       <Text style={styles.h1}>Book a Walk</Text>
-      <Text style={styles.sub}>Form</Text>
+
+      {selected ? (
+        <Text style={{ marginTop: 6 }}>
+          Booking: {selected.name} (${selected.price}/hr, ⭐ {selected.rating})
+        </Text>
+      ) : (
+        <Text style={styles.sub}>Select a walker to begin.</Text>
+      )}
     </View>
   );
 }
