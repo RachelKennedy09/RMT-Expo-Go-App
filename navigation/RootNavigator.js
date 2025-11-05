@@ -8,6 +8,7 @@ Notes:
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import HomeScreen from "../screens/HomeScreen";
+import BookingScreen from "../screens/BookingScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +19,11 @@ export default function RootNavigator() {
         name="Home"
         component={HomeScreen}
         options={{ title: "Rocky Mountain Tails" }}
+      />
+      <Stack.Screen
+        name="Booking"
+        component={BookingScreen}
+        options={{ title: "Book a Walk" }}
       />
     </Stack.Navigator>
   );
