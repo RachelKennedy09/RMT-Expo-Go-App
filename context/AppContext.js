@@ -154,6 +154,18 @@ export function AppProvider({ children }) {
         return bookings.find((b) => b.id === id) || null;
       },
 
+      deleteBooking: async (id) => {
+        const next = (bookings ?? []).filter((b) => b.id !== id);
+        await persistBookings(next);
+      },
+
+      updateBooking: async (id, patch) => {
+        const next = (bookings ?? []).map((b) =>
+          b.id === id ? { ...b, ...patch } : b
+        );
+        await persistBookings(next);
+      },
+
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
     [walkers, bookings]

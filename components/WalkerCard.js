@@ -1,15 +1,15 @@
 /*
 components/WalkerCard.js
 Notes:
-- Reusable “card” for listing/selecting walkers (pressable for detail/booking).
-- Encapsulates rating, availability, and core profile info.
-- Props drive reuse (name, rating, price, photo, etc.).
-- Card is a Pressable so tapping anywhere can navigate or open details.
- */
+- Reusable pressable card for a walker row.
+- Includes favorite heart (toggles without triggering onPress).
+*/
 
 import { View, Text, Image, StyleSheet, Pressable } from "react-native";
+import { Feather } from "@expo/vector-icons";
 
 export default function WalkerCard({
+  id,
   name,
   rating = 5,
   walks = 0,
@@ -17,6 +17,8 @@ export default function WalkerCard({
   photo,
   isAvailable = true,
   bio,
+  favorite = false,
+  onToggleFavorite,
   onPress,
 }) {
   const stars = "★★★★★".slice(0, Math.round(rating));
@@ -28,26 +30,47 @@ export default function WalkerCard({
     >
       <Image source={{ uri: photo }} style={styles.avatar} resizeMode="cover" />
 
-      <View style={styles.info}>
-        <View style={styles.row}>
-          <Text style={styles.name}>{name}</Text>
-          <View
-            style={[
-              styles.badge,
-              { backgroundColor: isAvailable ? "#1f9d55" : "#aaa" },
-            ]}
-          >
-            <Text style={styles.badgeText}>
-              {isAvailable ? "Available" : "Busy"}
-            </Text>
+      <View style={{ flex: 1, gap: 6 }}>
+        {/* Top row: name + availability + heart */}
+        <View style={styles.rowBetween}>
+          <View style={styles.row}>
+            <Text style={styles.name}>{name}</Text>
+            <View
+              style={[
+                styles.badge,
+                { backgroundColor: isAvailable ? "#1f9d55" : "#aaa" },
+              ]}
+            >
+              <Text style={styles.badgeText}>
+                {isAvailable ? "Available" : "Busy"}
+              </Text>
+            </View>
           </View>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.ratng}>{stars}</Text>
-          <Text style={styles.muted}>· {walks} walks</Text>
-          <Text style={styles.muted}>· ${price}/hr</Text>
+
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              onToggleFavorite?.(id);
+            }}
+            hitSlop={8}
+          >
+            <Feather
+              name="heart"
+              size={20}
+              color={favorite ? "#e11d48" : "#bbb"}
+              fill={favorite ? "#e11d48" : "none"} // makes it filled or outlined
+            />
+          </Pressable>
         </View>
 
+        {/* Meta row */}
+        <View style={styles.row}>
+          <Text style={styles.rating}>{stars}</Text>
+          <Text style={styles.muted}> · {walks} walks</Text>
+          <Text style={styles.muted}> · ${price}/hr</Text>
+        </View>
+
+        {/* Bio */}
         {bio ? (
           <Text style={styles.bio} numberOfLines={2}>
             {bio}
@@ -80,16 +103,16 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     backgroundColor: "#eee",
   },
-  info: { flex: 1 },
   row: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 6 },
-  name: { fontSize: 16, fontWeight: "700", color: "#111" },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
+  rowBetween: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
+  name: { fontSize: 16, fontWeight: "700", color: "#111" },
+  badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },
   badgeText: { color: "#fff", fontWeight: "700", fontSize: 12 },
-  rating: { color: "#e6b800", fontSize: 14 }, // gold-ish stars
+  rating: { color: "#e6b800", fontSize: 14 },
   muted: { color: "#666", fontSize: 13 },
   bio: { color: "#444", marginTop: 6 },
 });

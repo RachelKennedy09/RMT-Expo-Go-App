@@ -2,7 +2,14 @@
 screens/BookingScreen.js
 Notes: Displays the booking form and selected walker info.
  */
-import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Pressable,
+  Alert,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useApp } from "../context/AppContext";
 
@@ -12,8 +19,7 @@ function formatDate(iso) {
 
 export default function BookingsListScreen() {
   const navigation = useNavigation();
-  const { bookings } = useApp();
-
+  const { bookings, deleteBooking } = useApp();
 
   if (!bookings || bookings.length === 0) {
     return (
@@ -38,6 +44,22 @@ export default function BookingsListScreen() {
             onPress={() =>
               navigation.navigate("BookingDetails", { id: item.id })
             }
+            onLongPress={() => {
+              Alert.alert(
+                "Delete Booking",
+                `Delete ${item.walkerName} on ${new Date(
+                  item.startISO
+                ).toLocaleString()}?`,
+                [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => deleteBooking(item.id),
+                  },
+                ]
+              );
+            }}
           >
             <Text style={styles.title}>
               {item.walkerName} · {item.durationMins} min
@@ -63,6 +85,11 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     borderWidth: 1,
     borderColor: "#eee",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 1,
   },
   title: { fontWeight: "800", fontSize: 16, color: "#111" },
 });

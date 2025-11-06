@@ -1,11 +1,47 @@
-import { View, Text, StyleSheet } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { View, Text, StyleSheet, Button, Alert } from "react-native";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { useLayoutEffect } from "react";
 import { useApp } from "../context/AppContext";
 
 export default function BookingDetailsScreen() {
   const route = useRoute();
-  const { getBookingById } = useApp();
+  const navigation = useNavigation();
+  const { getBookingById, deleteBooking } = useApp();
   const booking = getBookingById(route.params?.id);
+
+  useLayoutEffect(() => {
+    if (!booking) return;
+    navigation.setOptions({
+      headerRight: () => (
+        <Button
+          title="Delete"
+          color="#b91c1c"
+          onPress={() => {
+            Alert.alert(
+              "Delete Booking",
+              `Delete ${booking.walkerName} on ${new Date(
+                booking.startISO
+              ).toLocaleString()}?`,
+              [
+                {
+                  text: "Cancel",
+                  style: "cancel",
+                },
+                {
+                  text: "Delete",
+                  style: "destructive",
+                  onPress: () => {
+                    deleteBooking(booking.id);
+                    navigation.goBack();
+                  },
+                },
+              ]
+            );
+          }}
+        />
+      ),
+    });
+  }, [navigation, booking, deleteBooking]);
 
   if (!booking) {
     return (
