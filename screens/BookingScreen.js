@@ -1,38 +1,38 @@
+
 /*
 screens/BookingScreen.js
-Notes: Displays the booking form and selected walker info.
+Booking form: date, time, duration, dog name, notes.
+- Prefills walker from route params
+- Validates + saves via context.createBooking()
  */
-import { View, Text, StyleSheet } from "react-native";
-import { useRoute } from "@react-navigation/native";
+
+
+import { View, Text, StyleSheet, TextInput, Pressable, Alert } from "react-native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import { useApp } from "../context/AppContext";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function BookingScreen() {
   const route = useRoute();
   const { markSelectedWalker } = useApp();
-
-  // Get the selected walker once from route params
   const selected = useMemo(
     () => route.params?.walker ?? null,
     [route.params?.walker]
   );
 
   useEffect(() => {
-    if (selected?.id) {
-      markSelectedWalker(selected.id);
-    }
+    if (selected?.id) markSelectedWalker(selected.id);
   }, [selected?.id, markSelectedWalker]);
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.h1}>Book a Walk</Text>
-
       {selected ? (
         <Text style={{ marginTop: 6 }}>
           Booking: {selected.name} (${selected.price}/hr, ⭐ {selected.rating})
         </Text>
       ) : (
-        <Text style={styles.sub}>Select a walker to begin.</Text>
+        <Text style={styles.sub}>Select a Walker to begin.</Text>
       )}
     </View>
   );

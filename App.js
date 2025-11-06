@@ -9,8 +9,8 @@ Notes:
 
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
-import RootNavigator from "./navigation/RootNavigator";
 import { AppProvider } from "./context/AppContext";
+import TabNavigator from "./navigation/TabNavigator";
 
 const navTheme = {
   ...DefaultTheme,
@@ -22,7 +22,7 @@ export default function App() {
     <AppProvider>
       <NavigationContainer theme={navTheme}>
         <StatusBar style="dark" />
-        <RootNavigator />
+        <TabNavigator />
       </NavigationContainer>
     </AppProvider>
   );

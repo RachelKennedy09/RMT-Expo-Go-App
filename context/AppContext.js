@@ -16,6 +16,7 @@ const AppContext = createContext(null);
 const STORAGE_KEYS = {
   WALKERS: "@rmt/walkers",
   LAST_SELECTION: "@rmt/lastSelection",
+  BOOKINGS: "@rmt/bookings",
 };
 
 // seed data for now (can be replaced by API)
@@ -47,18 +48,21 @@ const DEFAULT_WALKERS = [
 export function AppProvider({ children }) {
   const [walkers, setWalkers] = useState(null); //null until loaded
   const [lastSelection, setLastSelection] = useState(null); // { walkerId, at }
+  const [bookings, setBookings] = useState(null); //null until loaded
 
   // --- Load persisted state once on mount ---
   useEffect(() => {
     (async () => {
       try {
-        const [w, sel] = await Promise.all([
+        const [w, sel, b] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.WALKERS),
           AsyncStorage.getItem(STORAGE_KEYS.LAST_SELECTION),
+          AsyncStorage.getItem(STORAGE_KEYS.BOOKINGS),
         ]);
 
         setWalkers(w ? JSON.parse(w) : DEFAULT_WALKERS);
         setLastSelection(sel ? JSON.parse(sel) : null);
+        setBookings(b ? JSON.parse(b) : []);
       } catch (err) {
         console.warn("Failed to load storage:", err);
         // Fallback to defaults if parsing failed
@@ -89,6 +93,15 @@ export function AppProvider({ children }) {
     }
   };
 
+  const persistBookings = async (next) => {
+    setBookings(next);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(next));
+    } catch (err) {
+      console.warn("Failed to save bookings:", err);
+    }
+  };
+
   // --- Actions exposed to screens ---
   const actions = useMemo(
     () => ({
@@ -113,6 +126,34 @@ export function AppProvider({ children }) {
         );
         await persistWalkers(next);
       },
+
+      createBooking: async (input) => {
+        const id = `${Date.now().toString(36)}-${Math.random()
+          .String(36)
+          .slice(2, 8)}`;
+
+        const booking = {
+          id,
+          walkerId: input.walkerId,
+          walkerName: input.walkerName,
+          pricePerHour: input.pricePerHour,
+          startISO: input.startISO, // "2025-11-16T14....."
+          durationMins: input.durationMins, // 30, 45, 60, 90
+          notes: input.notes?.trim() || "",
+          createdAt: new Date().toISOString(),
+        };
+
+        const next = [booking, ...(bookings ?? [])]; //newest first
+        await persistBookings(next);
+        return booking.id;
+      },
+
+      getBookingById: (id) => {
+        if (!bookings) return null;
+        return bookings.find(b => b.id === id) || null;
+      },
+
+
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
     [walkers]
@@ -121,10 +162,10 @@ export function AppProvider({ children }) {
   const value = useMemo(
     () => ({
       walkers,
-      lastSelection,
+      lastSelection, bookings,
       ...actions,
     }),
-    [walkers, lastSelection, actions]
+    [walkers, lastSelection,bookings, actions]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
