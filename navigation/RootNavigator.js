@@ -7,8 +7,8 @@ Notes:
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import HomeScreen from "../screens/HomeScreen";
-import BookingScreen from "../screens/BookingScreen";
+import HomeScreen from "../screens/HomeStack";
+import BookingScreen from "./BookingStack";
 
 const Stack = createNativeStackNavigator();
 

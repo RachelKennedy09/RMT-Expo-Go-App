@@ -4,10 +4,24 @@ Notes: Displays the booking form and selected walker info.
  */
 import { View, Text, StyleSheet } from "react-native";
 import { useRoute } from "@react-navigation/native";
+import { useApp } from "../context/AppContext";
+import { useEffect, useMemo } from "react";
 
 export default function BookingScreen() {
   const route = useRoute();
-  const selected = route.params?.walker;
+  const { markSelectedWalker } = useApp();
+
+  // Get the selected walker once from route params
+  const selected = useMemo(
+    () => route.params?.walker ?? null,
+    [route.params?.walker]
+  );
+
+  useEffect(() => {
+    if (selected?.id) {
+      markSelectedWalker(selected.id);
+    }
+  }, [selected?.id, markSelectedWalker]);
 
   return (
     <View style={styles.wrap}>

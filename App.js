@@ -10,6 +10,7 @@ Notes:
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import RootNavigator from "./navigation/RootNavigator";
+import { AppProvider } from "./context/AppContext";
 
 const navTheme = {
   ...DefaultTheme,
@@ -18,9 +19,11 @@ const navTheme = {
 
 export default function App() {
   return (
-    <NavigationContainer theme={navTheme}>
-      <StatusBar style="dark" />
-      <RootNavigator />
-    </NavigationContainer>
+    <AppProvider>
+      <NavigationContainer theme={navTheme}>
+        <StatusBar style="dark" />
+        <RootNavigator />
+      </NavigationContainer>
+    </AppProvider>
   );
 }
