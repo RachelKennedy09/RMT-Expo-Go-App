@@ -1,4 +1,3 @@
-
 /*
 screens/BookingScreen.js
 Booking form: date, time, duration, dog name, notes.
@@ -6,40 +5,230 @@ Booking form: date, time, duration, dog name, notes.
 - Validates + saves via context.createBooking()
  */
 
-
-import { View, Text, StyleSheet, TextInput, Pressable, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  Alert,
+} from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useApp } from "../context/AppContext";
 import { useEffect, useMemo, useState } from "react";
 
+const DURATIONS = [30, 45, 60, 90];
+
 export default function BookingScreen() {
   const route = useRoute();
-  const { markSelectedWalker } = useApp();
+  const navigation = useNavigation();
+  const { markSelectedWalker, createBooking } = useApp();
+
   const selected = useMemo(
     () => route.params?.walker ?? null,
     [route.params?.walker]
   );
-
+  // persist last selected walker
   useEffect(() => {
     if (selected?.id) markSelectedWalker(selected.id);
   }, [selected?.id, markSelectedWalker]);
+
+  // Form state
+  const [dateStr, setDateStr] = useState("");
+  const [timeStr, setTimeStr] = useState("");
+  const [duration, setDuration] = useState(60);
+  const [dogName, setDogName] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  //Validation
+  const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const isValidTime = (s) => /^\d{2}:\d{2}$/.test(s);
+  const isFuture = (iso) => new Date(iso).getTime() > Date.now();
+
+  const buildStartISO = () => {
+    //combine data and time in local tz, then to ISO
+    const [yy, mm, dd] = dateStr.split("-").map(Number);
+    const [HH, MM] = timeStr.split(":").map(Number);
+    if (!yy || !mm || !dd || HH === undefined || MM === undefined) return null;
+    const local = new Date(yy, mm - 1, dd, HH, MM, 0);
+    return local.toISOString();
+  };
+
+  const canSubmit = useMemo(() => {
+    if (!selected?.id) return false;
+    if (!dogName.trim()) return false;
+    if (!isValidDate(dateStr) || !isValidTime(timeStr)) return false;
+    const iso = buildStartIso();
+    if (!iso || !isFuture(iso)) return false;
+    return true;
+  }, [selected?.id, dogName, dateStr, timeStr, duration]);
+
+  //submit
+  const onSubmit = async () => {
+    setError("");
+    if (!canSubmit) {
+      setError("Please complete all required fields with valid values");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const startISO = buildStartISO();
+
+      await createBooking({
+        walkerId: selected.id,
+        walkerName: selected.name,
+        pricePerHour: selected.price,
+        startISO,
+        durationMins: duration,
+        dogName,
+        notes,
+      });
+
+      Alert.alert("Success", "Your booking was created.");
+      navigation.navigate("BookingsList"); //Switch to list view
+    } catch (e) {
+      console.warn(e);
+      setError("Could not save booking. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.h1}>Book a Walk</Text>
       {selected ? (
-        <Text style={{ marginTop: 6 }}>
-          Booking: {selected.name} (${selected.price}/hr, ⭐ {selected.rating})
+        <Text style={styles.sub}>
+          Walker: {selected.name} (${selected.price}/hr, ⭐ {selected.rating})
         </Text>
       ) : (
-        <Text style={styles.sub}>Select a Walker to begin.</Text>
+        <Text style={styles.sub}>Select a walker to begin.</Text>
       )}
+
+      {/* Date */}
+      <View style={styles.field}>
+        <Text style={styles.label}>Date (YYYY-MM-DD) *</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="2025-11-16"
+          value={dateStr}
+          onChangeText={setDateStr}
+          inputMode="numeric"
+        />
+      </View>
+
+      {/* Time */}
+      <View style={styles.field}>
+        <Text style={styles.label}>Start Time (HH:mm, 24h) *</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="14:00"
+          value={timeStr}
+          onChangeText={setTimeStr}
+          inputMode="numeric"
+        />
+      </View>
+
+      {/* Duration */}
+      <View style={styles.field}>
+        <Text style={styles.label}>Duration *</Text>
+        <View style={styles.row}>
+          {DURATIONS.map((d) => (
+            <Pressable
+              key={d}
+              onPress={() => setDuration(d)}
+              style={[styles.pill, duration === d && styles.pillActive]}
+            >
+              <Text
+                style={[
+                  styles.pillText,
+                  duration === d && styles.pillTextActive,
+                ]}
+              >
+                {d} min
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Dog Name */}
+      <View style={styles.field}>
+        <Text style={styles.label}>Dog Name *</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Luna"
+          value={dogName}
+          onChangeText={setDogName}
+        />
+      </View>
+
+      {/* Notes */}
+      <View style={styles.field}>
+        <Text style={styles.label}>Notes</Text>
+        <TextInput
+          style={[styles.input, { height: 80, textAlignVertical: "top" }]}
+          placeholder="Any special instructions?"
+          value={notes}
+          onChangeText={setNotes}
+          multiline
+        />
+      </View>
+
+      {!!error && <Text style={styles.error}>{error}</Text>}
+
+      <Pressable
+        onPress={onSubmit}
+        disabled={!canSubmit || submitting}
+        style={[styles.submit, (!canSubmit || submitting) && { opacity: 0.6 }]}
+      >
+        <Text style={styles.submitText}>
+          {submitting ? "Saving…" : "Create Booking"}
+        </Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, padding: 20, justifyContent: "center", gap: 8 },
+  wrap: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 24,
+    backgroundColor: "#fafafa",
+    gap: 10,
+  },
   h1: { fontSize: 22, fontWeight: "800" },
-  sub: { color: "#555" },
+  sub: { color: "#555", marginBottom: 6 },
+  field: { gap: 6 },
+  label: { fontWeight: "700", color: "#222" },
+  input: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  pill: {
+    backgroundColor: "#eee",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  pillActive: { backgroundColor: "#2f6f6f" },
+  pillText: { fontWeight: "700", color: "#222" },
+  pillTextActive: { color: "#fff" },
+  error: { color: "#b91c1c", marginTop: 4 },
+  submit: {
+    marginTop: 8,
+    backgroundColor: "#2f6f6f",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+  submitText: { color: "#fff", fontWeight: "800", fontSize: 16 },
 });
