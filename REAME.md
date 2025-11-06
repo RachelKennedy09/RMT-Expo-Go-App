@@ -2,3 +2,6 @@
 -- switched to tab navigator midway for a more in depth app
 
 -- got in habbit of having tabs, with screen within and wrapping my head around that. making sure user can flow backwards to each screen or tab
+
+-- after doing booking formed noticed the keyboard was in the way, fixed it so it was easily exitable.
+the date needed automatic  dashes and the time needed automatic colons

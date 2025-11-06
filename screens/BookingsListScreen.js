@@ -7,13 +7,14 @@ import { useNavigation } from "@react-navigation/native";
 import { useApp } from "../context/AppContext";
 
 function formatDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleString();
+  return new Date(iso).toLocaleString();
 }
 
 export default function BookingsListScreen() {
   const navigation = useNavigation();
   const { bookings } = useApp();
+
+
   if (!bookings || bookings.length === 0) {
     return (
       <View style={styles.wrap}>
@@ -27,7 +28,7 @@ export default function BookingsListScreen() {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.h1}>My Books</Text>
+      <Text style={styles.h1}>My Bookings</Text>
       <FlatList
         data={bookings}
         keyExtractor={(b) => b.id}

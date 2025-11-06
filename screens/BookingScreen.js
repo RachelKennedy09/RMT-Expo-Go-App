@@ -12,12 +12,55 @@ import {
   TextInput,
   Pressable,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useApp } from "../context/AppContext";
 import { useEffect, useMemo, useState } from "react";
 
 const DURATIONS = [30, 45, 60, 90];
+
+function digitsOnly(s = "") {
+  return s.replace(/\D+/g, "");
+}
+
+/** Formats to YYYY-MM-DD while typing: 2025 -> 2025-, 202511 -> 2025-11-, etc. */
+function formatDateInput(raw) {
+  const d = digitsOnly(raw).slice(0, 8); // YYYYMMDD (max 8 digits)
+  const y = d.slice(0, 4);
+  const m = d.slice(4, 6);
+  const day = d.slice(6, 8);
+  let out = y;
+  if (m.length) out += "-" + m;
+  if (day.length) out += "-" + day;
+  return out;
+}
+
+/** Formats to HH:mm while typing (24h). Clamps to 23:59 on invalid hours/minutes. */
+function formatTimeInput(raw) {
+  let d = digitsOnly(raw).slice(0, 4); // HHmm (max 4 digits)
+  let h = d.slice(0, 2);
+  let m = d.slice(2, 4);
+
+  // clamp hours 00-23
+  if (h.length === 2) {
+    const hi = Math.max(0, Math.min(23, parseInt(h, 10)));
+    h = String(hi).padStart(2, "0");
+  }
+  // clamp minutes 00-59
+  if (m.length === 2) {
+    const mi = Math.max(0, Math.min(59, parseInt(m, 10)));
+    m = String(mi).padStart(2, "0");
+  }
+
+  let out = h;
+  if (m.length) out += ":" + m;
+  return out;
+}
 
 export default function BookingScreen() {
   const route = useRoute();
@@ -60,7 +103,7 @@ export default function BookingScreen() {
     if (!selected?.id) return false;
     if (!dogName.trim()) return false;
     if (!isValidDate(dateStr) || !isValidTime(timeStr)) return false;
-    const iso = buildStartIso();
+    const iso = buildStartISO();
     if (!iso || !isFuture(iso)) return false;
     return true;
   }, [selected?.id, dogName, dateStr, timeStr, duration]);
@@ -87,7 +130,7 @@ export default function BookingScreen() {
       });
 
       Alert.alert("Success", "Your booking was created.");
-      navigation.navigate("BookingsList"); //Switch to list view
+      navigation.navigate("BookingsTab", { screen: "BookingsList" }); //Switch to list view
     } catch (e) {
       console.warn(e);
       setError("Could not save booking. Please try again.");
@@ -97,102 +140,125 @@ export default function BookingScreen() {
   };
 
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.h1}>Book a Walk</Text>
-      {selected ? (
-        <Text style={styles.sub}>
-          Walker: {selected.name} (${selected.price}/hr, ⭐ {selected.rating})
-        </Text>
-      ) : (
-        <Text style={styles.sub}>Select a walker to begin.</Text>
-      )}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.select({ ios: "padding", android: undefined })}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.wrap}>
+            <Text style={styles.h1}>Book a Walk</Text>
+            {selected ? (
+              <Text style={styles.sub}>
+                Walker: {selected.name} (${selected.price}/hr, ⭐{" "}
+                {selected.rating})
+              </Text>
+            ) : (
+              <Text style={styles.sub}>Select a walker to begin.</Text>
+            )}
 
-      {/* Date */}
-      <View style={styles.field}>
-        <Text style={styles.label}>Date (YYYY-MM-DD) *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="2025-11-16"
-          value={dateStr}
-          onChangeText={setDateStr}
-          inputMode="numeric"
-        />
-      </View>
+            {/* Date */}
+            <View style={styles.field}>
+              <Text style={styles.label}>Date (YYYY-MM-DD) *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="2025-11-16"
+                value={dateStr}
+                onChangeText={(t) => setDateStr(formatDateInput(t))}
+                inputMode="numeric"
+                maxLength={10} // YYYY-MM-DD
+                returnKeyType="next"
+              />
+            </View>
 
-      {/* Time */}
-      <View style={styles.field}>
-        <Text style={styles.label}>Start Time (HH:mm, 24h) *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="14:00"
-          value={timeStr}
-          onChangeText={setTimeStr}
-          inputMode="numeric"
-        />
-      </View>
+            {/* Time */}
+            <View style={styles.field}>
+              <Text style={styles.label}>Start Time (HH:mm, 24h) *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="14:00"
+                value={timeStr}
+                onChangeText={(t) => setTimeStr(formatTimeInput(t))}
+                inputMode="numeric"
+                maxLength={5} // HH:mm
+                returnKeyType="next"
+              />
+            </View>
 
-      {/* Duration */}
-      <View style={styles.field}>
-        <Text style={styles.label}>Duration *</Text>
-        <View style={styles.row}>
-          {DURATIONS.map((d) => (
+            {/* Duration */}
+            <View style={styles.field}>
+              <Text style={styles.label}>Duration *</Text>
+              <View style={styles.row}>
+                {DURATIONS.map((d) => (
+                  <Pressable
+                    key={d}
+                    onPress={() => setDuration(d)}
+                    style={[styles.pill, duration === d && styles.pillActive]}
+                  >
+                    <Text
+                      style={[
+                        styles.pillText,
+                        duration === d && styles.pillTextActive,
+                      ]}
+                    >
+                      {d} min
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* Dog Name */}
+            <View style={styles.field}>
+              <Text style={styles.label}>Dog Name *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Rammi"
+                value={dogName}
+                onChangeText={setDogName}
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
+              />
+            </View>
+
+            {/* Notes */}
+            <View style={styles.field}>
+              <Text style={styles.label}>Notes</Text>
+              <TextInput
+                style={[styles.input, { height: 80, textAlignVertical: "top" }]}
+                placeholder="Any special instructions?"
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+              />
+            </View>
+
+            {!!error && <Text style={styles.error}>{error}</Text>}
+
             <Pressable
-              key={d}
-              onPress={() => setDuration(d)}
-              style={[styles.pill, duration === d && styles.pillActive]}
+              onPress={onSubmit}
+              disabled={!canSubmit || submitting}
+              style={[
+                styles.submit,
+                (!canSubmit || submitting) && { opacity: 0.6 },
+              ]}
             >
-              <Text
-                style={[
-                  styles.pillText,
-                  duration === d && styles.pillTextActive,
-                ]}
-              >
-                {d} min
+              <Text style={styles.submitText}>
+                {submitting ? "Saving…" : "Create Booking"}
               </Text>
             </Pressable>
-          ))}
-        </View>
-      </View>
-
-      {/* Dog Name */}
-      <View style={styles.field}>
-        <Text style={styles.label}>Dog Name *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Luna"
-          value={dogName}
-          onChangeText={setDogName}
-        />
-      </View>
-
-      {/* Notes */}
-      <View style={styles.field}>
-        <Text style={styles.label}>Notes</Text>
-        <TextInput
-          style={[styles.input, { height: 80, textAlignVertical: "top" }]}
-          placeholder="Any special instructions?"
-          value={notes}
-          onChangeText={setNotes}
-          multiline
-        />
-      </View>
-
-      {!!error && <Text style={styles.error}>{error}</Text>}
-
-      <Pressable
-        onPress={onSubmit}
-        disabled={!canSubmit || submitting}
-        style={[styles.submit, (!canSubmit || submitting) && { opacity: 0.6 }]}
-      >
-        <Text style={styles.submitText}>
-          {submitting ? "Saving…" : "Create Booking"}
-        </Text>
-      </Pressable>
-    </View>
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: { flexGrow: 1 },
   wrap: {
     flex: 1,
     padding: 20,

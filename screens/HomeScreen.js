@@ -6,7 +6,7 @@ Notes:
 
 import { View, Text, StyleSheet, FlatList } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import Button from "../components/Button";
+
 import WalkerCard from "../components/WalkerCard";
 
 const WALKERS = [
@@ -51,8 +51,6 @@ export default function HomeScreen() {
           />
         )}
       />
-
-      <Button title="Book Now" onPress={() => navigation.navigate("Booking")} />
     </View>
   );
 }

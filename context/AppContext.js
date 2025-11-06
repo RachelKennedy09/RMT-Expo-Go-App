@@ -129,7 +129,7 @@ export function AppProvider({ children }) {
 
       createBooking: async (input) => {
         const id = `${Date.now().toString(36)}-${Math.random()
-          .String(36)
+          .toString(36)
           .slice(2, 8)}`;
 
         const booking = {
@@ -139,6 +139,7 @@ export function AppProvider({ children }) {
           pricePerHour: input.pricePerHour,
           startISO: input.startISO, // "2025-11-16T14....."
           durationMins: input.durationMins, // 30, 45, 60, 90
+          dogName: input.dogName.trim(),
           notes: input.notes?.trim() || "",
           createdAt: new Date().toISOString(),
         };
@@ -150,22 +151,22 @@ export function AppProvider({ children }) {
 
       getBookingById: (id) => {
         if (!bookings) return null;
-        return bookings.find(b => b.id === id) || null;
+        return bookings.find((b) => b.id === id) || null;
       },
-
 
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
-    [walkers]
+    [walkers, bookings]
   );
 
   const value = useMemo(
     () => ({
       walkers,
-      lastSelection, bookings,
+      lastSelection,
+      bookings,
       ...actions,
     }),
-    [walkers, lastSelection,bookings, actions]
+    [walkers, lastSelection, bookings, actions]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

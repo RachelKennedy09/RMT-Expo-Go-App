@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native-web";
+import { View, Text, StyleSheet } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useApp } from "../context/AppContext";
 
