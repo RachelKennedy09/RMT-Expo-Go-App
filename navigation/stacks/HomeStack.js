@@ -5,8 +5,8 @@ Notes:
 - We keep current screens; headers shown for page titles.
  */
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "../screens/HomeScreen";
-import BookingScreen from "../screens/BookingScreen";
+import HomeScreen from "../../screens/HomeScreen";
+import BookingScreen from "../../screens/BookingScreen";
 
 const Stack = createNativeStackNavigator();
 

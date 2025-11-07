@@ -1,31 +1,22 @@
 /*
 App.js
 Notes:
-- Acts as the root component of the app.
-- Every React Native app starts here.
-- <View> = container, <Text> = basic text node.
-- NavigationContainer provides navigation state/context app-wide.
- */
+- Root entry of the app.
+- Wraps everything with global providers (App + Toast).
+- RootNavigator decides: show Login (AuthStack) or MainTabs.
+*/
 
-import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider } from "./context/AppContext";
-import TabNavigator from "./navigation/TabNavigator";
 import { ToastProvider } from "./components/Toast";
-
-const navTheme = {
-  ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, background: "#fafafa" },
-};
+import RootNavigator from "./navigation/RootNavigator";
 
 export default function App() {
   return (
     <AppProvider>
       <ToastProvider>
-        <NavigationContainer theme={navTheme}>
-          <StatusBar style="dark" />
-          <TabNavigator />
-        </NavigationContainer>
+        <StatusBar style="dark" />
+        <RootNavigator />
       </ToastProvider>
     </AppProvider>
   );

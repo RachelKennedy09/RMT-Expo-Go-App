@@ -17,52 +17,56 @@ const STORAGE_KEYS = {
   WALKERS: "@rmt/walkers",
   LAST_SELECTION: "@rmt/lastSelection",
   BOOKINGS: "@rmt/bookings",
+  USER: "@rmt/user",
 };
 
 // seed data for now (can be replaced by API)
-const DEFAULT_WALKERS = [
-  {
-    id: "w1",
-    name: "Alex",
-    rating: 4.8,
-    walks: 120,
-    price: 35,
-    photo: "https://randomuser.me/api/portraits/men/32.jpg",
-    bio: "Trail runner & dog whisperer. Loves long alpine walks.",
-    isAvailable: true,
-    favorite: false,
-  },
-  {
-    id: "w2",
-    name: "Maya",
-    rating: 5,
-    walks: 210,
-    price: 40,
-    photo: "https://randomuser.me/api/portraits/women/65.jpg",
-    bio: "Gentle training approach; specializes in high-energy dogs.",
-    isAvailable: false,
-    favorite: true,
-  },
-];
+// const DEFAULT_WALKERS = [
+//   {
+//     id: "w1",
+//     name: "Alex",
+//     rating: 4.8,
+//     walks: 120,
+//     price: 35,
+//     photo: "https://randomuser.me/api/portraits/men/32.jpg",
+//     bio: "Trail runner & dog whisperer. Loves long alpine walks.",
+//     isAvailable: true,
+//     favorite: false,
+//   },
+//   {
+//     id: "w2",
+//     name: "Maya",
+//     rating: 5,
+//     walks: 210,
+//     price: 40,
+//     photo: "https://randomuser.me/api/portraits/women/65.jpg",
+//     bio: "Gentle training approach; specializes in high-energy dogs.",
+//     isAvailable: false,
+//     favorite: true,
+//   },
+// ];
 
 export function AppProvider({ children }) {
   const [walkers, setWalkers] = useState(null); //null until loaded
   const [lastSelection, setLastSelection] = useState(null); // { walkerId, at }
   const [bookings, setBookings] = useState(null); //null until loaded
+  const [user, setUser] = useState(null); // {name, email}
 
   // --- Load persisted state once on mount ---
   useEffect(() => {
     (async () => {
       try {
-        const [w, sel, b] = await Promise.all([
+        const [w, sel, b, u] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.WALKERS),
           AsyncStorage.getItem(STORAGE_KEYS.LAST_SELECTION),
           AsyncStorage.getItem(STORAGE_KEYS.BOOKINGS),
+          AsyncStorage.getItem(STORAGE_KEYS.USER),
         ]);
 
         setWalkers(w ? JSON.parse(w) : DEFAULT_WALKERS);
         setLastSelection(sel ? JSON.parse(sel) : null);
         setBookings(b ? JSON.parse(b) : []);
+        setUser(u ? JSON.parse(u) : null);
       } catch (err) {
         console.warn("Failed to load storage:", err);
         // Fallback to defaults if parsing failed
@@ -102,6 +106,19 @@ export function AppProvider({ children }) {
     }
   };
 
+  const persistUser = async (u) => {
+    setUser(u);
+    try {
+      if (u) {
+        await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(u));
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER);
+      }
+    } catch (err) {
+      console.warn("Failed to save user: ", err);
+    }
+  };
+
   // --- Actions exposed to screens ---
   const actions = useMemo(
     () => ({
@@ -118,7 +135,6 @@ export function AppProvider({ children }) {
         await persistLastSelection(sel);
       },
 
-      // Example: update a walker’s availability (would come from server later)
       setAvailability: async (walkerId, isAvailable) => {
         if (!walkers) return;
         const next = walkers.map((w) =>
@@ -165,7 +181,17 @@ export function AppProvider({ children }) {
         );
         await persistBookings(next);
       },
+      login: async ({ name, email }) => {
+        const trimmed = {
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+        };
+        await persistUser(trimmed);
+      },
 
+      logout: async () => {
+        await persistUser(null);
+      },
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
     [walkers, bookings]
@@ -176,9 +202,11 @@ export function AppProvider({ children }) {
       walkers,
       lastSelection,
       bookings,
+      user,
+      isLoggedIn: !!user,
       ...actions,
     }),
-    [walkers, lastSelection, bookings, actions]
+    [walkers, lastSelection, bookings, user, actions]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

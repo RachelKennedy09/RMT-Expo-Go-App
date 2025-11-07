@@ -11,8 +11,8 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import HomeStack from "./HomeStack";
-import BookingsStack from "./BookingsStack";
+import HomeStack from "./stacks/HomeStack";
+import BookingsStack from "./stacks/BookingsStack";
 import AccountScreen from "../screens/AccountScreen";
 
 const Tab = createBottomTabNavigator();

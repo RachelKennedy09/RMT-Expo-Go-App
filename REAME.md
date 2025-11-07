@@ -7,3 +7,6 @@
 the date needed automatic  dashes and the time needed automatic colons
 
 added a toast for messages for android users (delete booking success message)
+
+set up account log in log out on account tabs, but wanted to have a real feel app to hand in so switched to have a rootnavigator and have the first screen to be a login or register route.
+Used Authstack like we were taught

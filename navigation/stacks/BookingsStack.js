@@ -5,8 +5,8 @@ Notes:
 */
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import BookingsListScreen from "../screens/BookingsListScreen";
-import BookingDetailsScreen from "../screens/BookingDetailsScreen";
+import BookingsListScreen from "../../screens/BookingsListScreen";
+import BookingDetailsScreen from "../../screens/BookingDetailsScreen";
 
 const Stack = createNativeStackNavigator();
 
