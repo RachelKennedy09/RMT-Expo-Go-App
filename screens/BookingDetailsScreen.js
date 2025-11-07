@@ -2,12 +2,14 @@ import { View, Text, StyleSheet, Button, Alert } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useLayoutEffect } from "react";
 import { useApp } from "../context/AppContext";
+import { useToast } from "../components/Toast";
 
 export default function BookingDetailsScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { getBookingById, deleteBooking } = useApp();
   const booking = getBookingById(route.params?.id);
+  const { show } = useToast();
 
   useLayoutEffect(() => {
     if (!booking) return;
@@ -32,6 +34,7 @@ export default function BookingDetailsScreen() {
                   style: "destructive",
                   onPress: () => {
                     deleteBooking(booking.id);
+                    show("Booking deleted");
                     navigation.goBack();
                   },
                 },

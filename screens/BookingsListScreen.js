@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useApp } from "../context/AppContext";
+import { useToast } from "../components/Toast";
 
 function formatDate(iso) {
   return new Date(iso).toLocaleString();
@@ -20,6 +21,7 @@ function formatDate(iso) {
 export default function BookingsListScreen() {
   const navigation = useNavigation();
   const { bookings, deleteBooking } = useApp();
+  const { show } = useToast();
 
   if (!bookings || bookings.length === 0) {
     return (
@@ -47,15 +49,16 @@ export default function BookingsListScreen() {
             onLongPress={() => {
               Alert.alert(
                 "Delete Booking",
-                `Delete ${item.walkerName} on ${new Date(
-                  item.startISO
-                ).toLocaleString()}?`,
+                `Delete ${item.walkerName} on ${formatDate(item.startISO)}?`,
                 [
                   { text: "Cancel", style: "cancel" },
                   {
                     text: "Delete",
                     style: "destructive",
-                    onPress: () => deleteBooking(item.id),
+                    onPress: () => {
+                      deleteBooking(item.id);
+                      show("Booking deleted");
+                    },
                   },
                 ]
               );

@@ -11,6 +11,7 @@ import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider } from "./context/AppContext";
 import TabNavigator from "./navigation/TabNavigator";
+import { ToastProvider } from "./components/Toast";
 
 const navTheme = {
   ...DefaultTheme,
@@ -20,10 +21,12 @@ const navTheme = {
 export default function App() {
   return (
     <AppProvider>
-      <NavigationContainer theme={navTheme}>
-        <StatusBar style="dark" />
-        <TabNavigator />
-      </NavigationContainer>
+      <ToastProvider>
+        <NavigationContainer theme={navTheme}>
+          <StatusBar style="dark" />
+          <TabNavigator />
+        </NavigationContainer>
+      </ToastProvider>
     </AppProvider>
   );
 }

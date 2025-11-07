@@ -21,6 +21,7 @@ import {
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useApp } from "../context/AppContext";
 import { useEffect, useMemo, useState } from "react";
+import { useToast } from "../components/Toast";
 
 const DURATIONS = [30, 45, 60, 90];
 
@@ -66,6 +67,7 @@ export default function BookingScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { markSelectedWalker, createBooking } = useApp();
+  const { show } = useToast();
 
   const selected = useMemo(
     () => route.params?.walker ?? null,
@@ -129,7 +131,9 @@ export default function BookingScreen() {
         notes,
       });
 
+      //using both alerts for learning purposes
       Alert.alert("Success", "Your booking was created.");
+      show("Booking created");
       navigation.navigate("BookingsTab", { screen: "BookingsList" }); //Switch to list view
     } catch (e) {
       console.warn(e);

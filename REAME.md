@@ -5,3 +5,5 @@
 
 -- after doing booking formed noticed the keyboard was in the way, fixed it so it was easily exitable.
 the date needed automatic  dashes and the time needed automatic colons
+
+added a toast for messages for android users (delete booking success message)
