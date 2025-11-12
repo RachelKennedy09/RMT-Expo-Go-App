@@ -1,9 +1,9 @@
 /*
 screens/BookingScreen.js
 Booking form: date, time, duration, dog name, notes.
-- Prefills walker from route params
+- Prefills walker from walkerId param (or lastSelection fallback)
 - Validates + saves via context.createBooking()
- */
+*/
 
 import {
   View,
@@ -29,9 +29,9 @@ function digitsOnly(s = "") {
   return s.replace(/\D+/g, "");
 }
 
-/** Formats to YYYY-MM-DD while typing: 2025 -> 2025-, 202511 -> 2025-11-, etc. */
+/** Formats to YYYY-MM-DD while typing */
 function formatDateInput(raw) {
-  const d = digitsOnly(raw).slice(0, 8); // YYYYMMDD (max 8 digits)
+  const d = digitsOnly(raw).slice(0, 8);
   const y = d.slice(0, 4);
   const m = d.slice(4, 6);
   const day = d.slice(6, 8);
@@ -41,44 +41,44 @@ function formatDateInput(raw) {
   return out;
 }
 
-/** Formats to HH:mm while typing (24h). Clamps to 23:59 on invalid hours/minutes. */
+/** Formats to HH:mm (24h) while typing with clamping */
 function formatTimeInput(raw) {
-  let d = digitsOnly(raw).slice(0, 4); // HHmm (max 4 digits)
+  let d = digitsOnly(raw).slice(0, 4);
   let h = d.slice(0, 2);
   let m = d.slice(2, 4);
-
-  // clamp hours 00-23
-  if (h.length === 2) {
-    const hi = Math.max(0, Math.min(23, parseInt(h, 10)));
-    h = String(hi).padStart(2, "0");
-  }
-  // clamp minutes 00-59
-  if (m.length === 2) {
-    const mi = Math.max(0, Math.min(59, parseInt(m, 10)));
-    m = String(mi).padStart(2, "0");
-  }
-
-  let out = h;
-  if (m.length) out += ":" + m;
-  return out;
+  if (h.length === 2)
+    h = String(Math.max(0, Math.min(23, +h))).padStart(2, "0");
+  if (m.length === 2)
+    m = String(Math.max(0, Math.min(59, +m))).padStart(2, "0");
+  return m.length ? `${h}:${m}` : h;
 }
 
 export default function BookingScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { markSelectedWalker, createBooking } = useApp();
+  const { walkers, lastSelection, markSelectedWalker, createBooking } =
+    useApp();
   const { show } = useToast();
 
-  const selected = useMemo(
-    () => route.params?.walker ?? null,
-    [route.params?.walker]
-  );
-  // persist last selected walker
+  // 🧠 Resolve the active walker id from: route param → full object → lastSelection
+  const walkerId =
+    route.params?.walkerId ??
+    route.params?.walker?.id ??
+    lastSelection?.walkerId ??
+    null;
+
+  // 🔎 Derive the selected walker from current context list
+  const selected = useMemo(() => {
+    if (!walkers || !walkerId) return null;
+    return walkers.find((w) => w.id === walkerId) ?? null;
+  }, [walkers, walkerId]);
+
+  // Persist last selected (for convenience/deeplinks)
   useEffect(() => {
     if (selected?.id) markSelectedWalker(selected.id);
   }, [selected?.id, markSelectedWalker]);
 
-  // Form state
+  // ---- Form state ----
   const [dateStr, setDateStr] = useState("");
   const [timeStr, setTimeStr] = useState("");
   const [duration, setDuration] = useState(60);
@@ -87,13 +87,12 @@ export default function BookingScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  //Validation
+  // ---- Validation helpers ----
   const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
   const isValidTime = (s) => /^\d{2}:\d{2}$/.test(s);
   const isFuture = (iso) => new Date(iso).getTime() > Date.now();
 
   const buildStartISO = () => {
-    //combine data and time in local tz, then to ISO
     const [yy, mm, dd] = dateStr.split("-").map(Number);
     const [HH, MM] = timeStr.split(":").map(Number);
     if (!yy || !mm || !dd || HH === undefined || MM === undefined) return null;
@@ -110,7 +109,7 @@ export default function BookingScreen() {
     return true;
   }, [selected?.id, dogName, dateStr, timeStr, duration]);
 
-  //submit
+  // ---- Submit ----
   const onSubmit = async () => {
     setError("");
     if (!canSubmit) {
@@ -131,10 +130,9 @@ export default function BookingScreen() {
         notes,
       });
 
-      //using both alerts for learning purposes
       Alert.alert("Success", "Your booking was created.");
       show("Booking created");
-      navigation.navigate("BookingsTab", { screen: "BookingsList" }); //Switch to list view
+      navigation.navigate("BookingsTab", { screen: "BookingsList" });
     } catch (e) {
       console.warn(e);
       setError("Could not save booking. Please try again.");
@@ -173,7 +171,7 @@ export default function BookingScreen() {
                 value={dateStr}
                 onChangeText={(t) => setDateStr(formatDateInput(t))}
                 inputMode="numeric"
-                maxLength={10} // YYYY-MM-DD
+                maxLength={10}
                 returnKeyType="next"
               />
             </View>
@@ -187,7 +185,7 @@ export default function BookingScreen() {
                 value={timeStr}
                 onChangeText={(t) => setTimeStr(formatTimeInput(t))}
                 inputMode="numeric"
-                maxLength={5} // HH:mm
+                maxLength={5}
                 returnKeyType="next"
               />
             </View>

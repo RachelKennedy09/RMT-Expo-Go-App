@@ -10,7 +10,13 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ffffff",
+      "ios": {
+        "supportsTablet": true,
+        "infoPlist": {
+          "NSLocationWhenInUsageDescription": "We use your location to sugget nearby walkers and show local availability."
+        }
+      }
     },
     "ios": {
       "supportsTablet": true

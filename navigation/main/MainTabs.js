@@ -1,16 +1,25 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Feather } from "@expo/vector-icons";
+import {
+  AntDesign,
+  Feather,
+  Ionicons,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import HomeStack from "../stacks/HomeStack";
 import BookingsStack from "../stacks/BookingsStack";
 import AccountStack from "../stacks/AccountStack";
+import { useApp } from "../../context/AppContext";
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs() {
+  const { bookings } = useApp(); // 👈 from context
+  const badge = bookings?.length ? bookings.length : undefined;
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarActiveTintColor: "#2f6f6f",
         tabBarIcon: ({ color, size }) => {
           const map = {
             HomeStack: "home",
@@ -22,19 +31,35 @@ export default function MainTabs() {
       })}
     >
       <Tab.Screen
-        name="HomeStack"
+        name="HomeTab"
         component={HomeStack}
-        options={{ title: "Home" }}
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name="home" color={color} size={size} />
+          ),
+        }}
       />
       <Tab.Screen
-        name="BookingsStack"
+        name="BookingsTab"
         component={BookingsStack}
-        options={{ title: "Bookings" }}
+        options={{
+          title: "Bookings",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar" color={color} size={size} />
+          ),
+          tabBarBadge: badge,
+        }}
       />
       <Tab.Screen
-        name="AccountStack"
+        name="AccountTab"
         component={AccountStack}
-        options={{ title: "Account" }}
+        options={{
+          title: "Account",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="account" color={color} size={size} />
+          ),
+        }}
       />
     </Tab.Navigator>
   );

@@ -20,6 +20,7 @@ export default function WalkerCard({
   favorite = false,
   onToggleFavorite,
   onPress,
+  distanceKm,
 }) {
   const stars = "★★★★★".slice(0, Math.round(rating));
 
@@ -68,6 +69,9 @@ export default function WalkerCard({
           <Text style={styles.rating}>{stars}</Text>
           <Text style={styles.muted}> · {walks} walks</Text>
           <Text style={styles.muted}> · ${price}/hr</Text>
+          {typeof distanceKm === "number" && (
+            <Text style={styles.muted}> · {distanceKm.toFixed(1)} km</Text>
+          )}
         </View>
 
         {/* Bio */}
