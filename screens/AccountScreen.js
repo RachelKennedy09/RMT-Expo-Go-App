@@ -10,10 +10,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useApp } from "../context/AppContext";
 import { useToast } from "../components/Toast";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useLocalNotifications } from "../hooks/useLocalNotifications";
 
 export default function AccountScreen() {
   const { user, isLoggedIn, logout } = useApp();
   const { show } = useToast();
+  //notification helper
+  const { scheduleInSeconds } = useLocalNotifications();
 
   const onLogout = async () => {
     await logout();
@@ -40,6 +43,7 @@ export default function AccountScreen() {
           }}
         />
 
+        {/* Logged in user information */}
         {isLoggedIn && user ? (
           <>
             <View style={styles.card}>
@@ -59,11 +63,32 @@ export default function AccountScreen() {
               ) : null}
             </View>
 
+            {/* Logout button */}
             <Pressable
               onPress={onLogout}
               style={[styles.btn, styles.btnDanger]}
             >
               <Text style={styles.btnText}>Log Out</Text>
+            </Pressable>
+
+            {/* Test notification button and styles */}
+            <Pressable
+              onPress={() =>
+                scheduleInSeconds(3, {
+                  title: "Test Notification 🔔",
+                  body: "This was sent from your Account tab!",
+                })
+              }
+              style={{
+                backgroundColor: "#2f6f6f",
+                paddingVertical: 14,
+                borderRadius: 14,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "800", fontSize: 16 }}>
+                Test Notification
+              </Text>
             </Pressable>
           </>
         ) : (
