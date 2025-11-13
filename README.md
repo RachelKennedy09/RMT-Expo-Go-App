@@ -24,6 +24,7 @@ Please **Note**: "Rocky Montain Tails" is not a typo - it is a play on words!
     - [**Local Notifications**](#local-notifications)
   - [**Reset Demo Data**](#reset-demo-data)
   - [**Authentication (Demo Mode)**](#authentication-demo-mode)
+    - [How it works](#how-it-works)
     - [Future Improvements](#future-improvements)
     - [**Like / Favorite a Walker**](#like--favorite-a-walker)
   - [Design Principles](#design-principles)
@@ -142,22 +143,33 @@ the button is intentionally visible so the instructor can test resets during eva
 
 ## **Authentication (Demo Mode)**
 
-Login/Register does **not** validate credentials.  
-Any email + password signs the user in.
+This app uses local-only demo authentication — no real backend, and passwords are not stored anywhere.
 
-This demonstrates:
+### How it works
 
-- Navigation flow
-- Form handling
-- Logged-in state persistence
+- On Register, the app collects:
+  - Name
+  - Email
+  - Password (required, but never saved)
+  - Dog Name (optional)
+
+- When you create an account:
+  - The app saves only: { id, name, email, dogName }
+  - The password is ignored on purpose (beginner-friendly, demo-only)
+  - User is logged in immediately after registering
+
+- On Login, the app accepts any email + any password
+(password isn't validated, it simply completes the demo login flow)
 
 ### Future Improvements
 
-Would integrate with:
+A real version would connect to a backend such as:
+  - Node.js + Express + MongoDB
+  - Firebase Auth
+  - Appwrite
+  - Clerk
 
-- MongoDB + Express
-- Firebase Auth
-- Appwrite
+…and would hash + verify passwords securely.
 
 ### **Like / Favorite a Walker**
 
