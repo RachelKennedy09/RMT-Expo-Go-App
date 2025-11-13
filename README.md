@@ -6,9 +6,14 @@ Please **Note**: "Rocky Montain Tails" is not a typo - it is a play on words!
 
 ---
 
+### Trello Organization Link
+
+[Trello Board – RMT Expo Go App](https://trello.com/invite/b/690a7886d640fbafe44ce452/ATTI720f963febe18b65c6ae929cc802bb34FFB03145/rmt-expo-go-app)
+
 # **Table of Contents**
 
 - [🐾 **Rocky Mountain Tails (Expo Mobile App)**](#-rocky-mountain-tails-expo-mobile-app)
+  - [Trello Organization Link](#trello-organization-link)
 - [**Table of Contents**](#table-of-contents)
   - [Overview](#overview)
   - [App Flow (Routing Graph)](#app-flow-routing-graph)
