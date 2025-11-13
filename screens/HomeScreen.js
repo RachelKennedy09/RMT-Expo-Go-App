@@ -102,6 +102,7 @@ export default function HomeScreen() {
     <View style={styles.wrap}>
       <Text style={styles.h1}>Find Your Mountain Walker</Text>
       <Text style={styles.sub}>Trusted locals with great reviews.</Text>
+      <Text style={styles.hint}>Click on a walker to book a walk</Text>
 
       {/* Location / Nearby controls */}
       <View style={styles.controls}>
@@ -166,6 +167,12 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: "center",
     marginBottom: 6,
+  },
+  hint: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 10,
+    textAlign: "center",
   },
   locBtn: {
     backgroundColor: "#EAF6F6",
