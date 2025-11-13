@@ -1,8 +1,3 @@
-- update on read me
-- 1. shortened my BookingScreen.js file as it was 350 lines of code and learned that we should separate those types of files into other files to make it less complex and easier to read for professor or developers. This really helped open my eyes to exporting functions and how to convert them into another file. Was 390 lines, updated to 300 lines. I extracted the input formatting and validation into a shared utils file to keep the screen component lean and focused on UI and flow.
-- 2. Kept doc notes clean and short instead of too detailed, keeping line of code shortened and straight to the point.
-- 3. Please note: Rocky Mountain Tails is not a typo - it is a play on words!
-
 # 🐾 **Rocky Mountain Tails (Expo Mobile App)**
 
 A modern, mobile-first dog-walking app built with **React Native** and **Expo SDK 54**, demonstrating structured navigation, modular state management, geolocation filterting, local notifications, and polished mobile UX patterns.
@@ -148,26 +143,29 @@ This app uses local-only demo authentication — no real backend, and passwords 
 ### How it works
 
 - On Register, the app collects:
+
   - Name
   - Email
   - Password (required, but never saved)
   - Dog Name (optional)
 
 - When you create an account:
+
   - The app saves only: { id, name, email, dogName }
   - The password is ignored on purpose (beginner-friendly, demo-only)
   - User is logged in immediately after registering
 
 - On Login, the app accepts any email + any password
-(password isn't validated, it simply completes the demo login flow)
+  (password isn't validated, it simply completes the demo login flow)
 
 ### Future Improvements
 
 A real version would connect to a backend such as:
-  - Node.js + Express + MongoDB
-  - Firebase Auth
-  - Appwrite
-  - Clerk
+
+- Node.js + Express + MongoDB
+- Firebase Auth
+- Appwrite
+- Clerk
 
 …and would hash + verify passwords securely.
 
