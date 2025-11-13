@@ -1,9 +1,6 @@
 /*
   screens/BookingScreen.js
-  Booking form: date, time, duration, dog name, notes.
-  - Prefills walker from walkerId param (or lastSelection fallback)
-  - Validates + saves via context.createBooking()
-  - (NEW) Schedules a local notification 10 minutes before the walk start time
+  Booking form: date, time, duration, dog name, notes + reminder option.
 */
 
 import {
@@ -20,108 +17,47 @@ import {
   ScrollView,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import { useApp } from "../context/AppContext";
 import { useEffect, useMemo, useState } from "react";
+
+import { useApp } from "../context/AppContext";
 import { useToast } from "../components/Toast";
 import { useLocalNotifications } from "../hooks/useLocalNotifications";
-
-// ───────────────────────────────────────────────────────────────
-// CONSTANTS / PURE HELPERS
-// ───────────────────────────────────────────────────────────────
-
-const DURATIONS = [30, 45, 60, 90];
-
-/** digitsOnly(s): strip all non-digits (used by formatters) */
-function digitsOnly(s = "") {
-  return s.replace(/\D+/g, "");
-}
-
-/** formatDateInput: live-format to 'YYYY-MM-DD' as the user types */
-function formatDateInput(raw) {
-  const d = digitsOnly(raw).slice(0, 8);
-  const y = d.slice(0, 4);
-  const m = d.slice(4, 6);
-  const day = d.slice(6, 8);
-  let out = y;
-  if (m.length) out += "-" + m;
-  if (day.length) out += "-" + day;
-  return out;
-}
-
-/** formatTimeInput: live-format to 'HH:mm' (24h) with clamping */
-function formatTimeInput(raw) {
-  let d = digitsOnly(raw).slice(0, 4);
-  let h = d.slice(0, 2);
-  let m = d.slice(2, 4);
-  if (h.length === 2)
-    h = String(Math.max(0, Math.min(23, +h))).padStart(2, "0");
-  if (m.length === 2)
-    m = String(Math.max(0, Math.min(59, +m))).padStart(2, "0");
-  return m.length ? `${h}:${m}` : h;
-}
+import {
+  DURATIONS,
+  formatDateInput,
+  formatTimeInput,
+  isValidDate,
+  isValidTime,
+  buildStartISO,
+  getBookingStartDate,
+  isFuture,
+} from "../utils/bookingDateUtils";
 
 export default function BookingScreen() {
-  // ─────────────────────────────────────────────────────────────
-  // NAV/CONTEXT HOOKS
-  // ─────────────────────────────────────────────────────────────
   const route = useRoute();
   const navigation = useNavigation();
   const { walkers, lastSelection, markSelectedWalker, createBooking } =
     useApp();
   const { show } = useToast();
-
-  // ─────────────────────────────────────────────────────────────
-  // NOTIFICATIONS (local)
-  // ─────────────────────────────────────────────────────────────
-  // scheduleAt(date, override): schedules a local notification at an absolute Date.
-  // Works on iOS + Android in Expo Go; requires notification permission (handled in the hook).
   const { scheduleAt } = useLocalNotifications();
 
-  /** handleReminder(bookingStart: Date)
-   * Schedules a "10 minutes before" reminder for the given start time.
-   * Validates the incoming Date and shows user-friendly Alerts on errors.
-   */
-  async function handleReminder(bookingStart) {
-    try {
-      if (!(bookingStart instanceof Date) || isNaN(+bookingStart)) {
-        Alert.alert("Pick a valid date/time first");
-        return;
-      }
-      const remindAt = new Date(bookingStart.getTime() - 10 * 60 * 1000); // -10 min
-      await scheduleAt(remindAt, {
-        title: "Walk starts soon 🐶",
-        body: "Your walker arrives in ~10 minutes.",
-      });
-      Alert.alert("Reminder set!", "We’ll ping you 10 minutes before.");
-    } catch (e) {
-      Alert.alert("Couldn't schedule", e.message);
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // WALKER RESOLUTION (param → object → lastSelection)
-  // ─────────────────────────────────────────────────────────────
-  /** Resolve active walker id from multiple possible sources */
+  // Resolve active walker (param → object → lastSelection)
   const walkerId =
     route.params?.walkerId ??
     route.params?.walker?.id ??
     lastSelection?.walkerId ??
     null;
 
-  /** Derive the selected walker object from the current list */
   const selected = useMemo(() => {
     if (!walkers || !walkerId) return null;
     return walkers.find((w) => w.id === walkerId) ?? null;
   }, [walkers, walkerId]);
 
-  /** Persist last selected for convenience/deeplinks */
   useEffect(() => {
     if (selected?.id) markSelectedWalker(selected.id);
   }, [selected?.id, markSelectedWalker]);
 
-  // ─────────────────────────────────────────────────────────────
-  // FORM STATE
-  // ─────────────────────────────────────────────────────────────
+  // Form state
   const [dateStr, setDateStr] = useState("");
   const [timeStr, setTimeStr] = useState("");
   const [duration, setDuration] = useState(60);
@@ -130,56 +66,25 @@ export default function BookingScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // ─────────────────────────────────────────────────────────────
-  // VALIDATION HELPERS
-  // ─────────────────────────────────────────────────────────────
-  /** Basic format checks for date/time */
-  const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
-  const isValidTime = (s) => /^\d{2}:\d{2}$/.test(s);
-
-  /** isFuture(iso): true if ISO string represents a future moment */
-  const isFuture = (iso) => new Date(iso).getTime() > Date.now();
-
-  /** buildStartISO(): safely compose ISO string from form fields in local time */
-  const buildStartISO = () => {
-    const [yy, mm, dd] = dateStr.split("-").map(Number);
-    const [HH, MM] = timeStr.split(":").map(Number);
-    if (!yy || !mm || !dd || HH === undefined || MM === undefined) return null;
-    const local = new Date(yy, mm - 1, dd, HH, MM, 0);
-    return local.toISOString();
-  };
-
-  /** getBookingStartDate(): same as buildStartISO but returns a Date (for notifications) */
-  const getBookingStartDate = () => {
-    const [yy, mm, dd] = dateStr.split("-").map(Number);
-    const [HH, MM] = timeStr.split(":").map(Number);
-    if (!yy || !mm || !dd || HH === undefined || MM === undefined) return null;
-    return new Date(yy, mm - 1, dd, HH, MM, 0); // local time Date object
-  };
-
-  /** canSubmit: memoized gatekeeper for enabling the submit button */
   const canSubmit = useMemo(() => {
     if (!selected?.id) return false;
     if (!dogName.trim()) return false;
     if (!isValidDate(dateStr) || !isValidTime(timeStr)) return false;
-    const iso = buildStartISO();
+    const iso = buildStartISO(dateStr, timeStr);
     if (!iso || !isFuture(iso)) return false;
     return true;
   }, [selected?.id, dogName, dateStr, timeStr, duration]);
 
-  // ─────────────────────────────────────────────────────────────
-  // SUBMIT HANDLER
-  // ─────────────────────────────────────────────────────────────
-  /** onSubmit: validates and creates the booking via context.createBooking() */
   const onSubmit = async () => {
     setError("");
     if (!canSubmit) {
       setError("Please complete all required fields with valid values");
       return;
     }
+
     try {
       setSubmitting(true);
-      const startISO = buildStartISO();
+      const startISO = buildStartISO(dateStr, timeStr);
 
       await createBooking({
         walkerId: selected.id,
@@ -202,9 +107,25 @@ export default function BookingScreen() {
     }
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────────
+  const handleReminder = async () => {
+    const bookingStart = getBookingStartDate(dateStr, timeStr);
+    if (!bookingStart || isNaN(+bookingStart)) {
+      Alert.alert("Pick a valid date/time first");
+      return;
+    }
+
+    try {
+      const remindAt = new Date(bookingStart.getTime() - 10 * 60 * 1000);
+      await scheduleAt(remindAt, {
+        title: "Walk starts soon 🐶",
+        body: "Your walker arrives in ~10 minutes.",
+      });
+      Alert.alert("Reminder set!", "We’ll ping you 10 minutes before.");
+    } catch (e) {
+      Alert.alert("Couldn't schedule", e.message);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -318,16 +239,9 @@ export default function BookingScreen() {
               </Text>
             </Pressable>
 
-            {/* Reminder button (builds Date from current form values) */}
+            {/* Reminder */}
             <Pressable
-              onPress={() => {
-                const startDate = getBookingStartDate();
-                if (!startDate) {
-                  Alert.alert("Pick a valid date/time first");
-                  return;
-                }
-                handleReminder(startDate);
-              }}
+              onPress={handleReminder}
               style={{
                 padding: 12,
                 backgroundColor: "#4a6",

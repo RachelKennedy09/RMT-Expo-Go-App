@@ -1,3 +1,8 @@
+- update on read me
+- 1. shortened my BookingScreen.js file as it was 350 lines of code and learned that we should separate those types of files into other files to make it less complex and easier to read for professor or developers. This really helped open my eyes to exporting functions and how to convert them into another file. Was 390 lines, updated to 300 lines. I extracted the input formatting and validation into a shared utils file to keep the screen component lean and focused on UI and flow.
+
+
+
 # 🐾 **Rocky Mountain Tails (Expo Mobile App)**
 
 A modern, mobile-first dog-walking app built with **React Native** and **Expo SDK 54**, demonstrating full navigation structure, state management, local notifications, and thoughtful UX design for real-world usability.
