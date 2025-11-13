@@ -1,3 +1,9 @@
+/*
+  MainTabs.js
+  - Bottom tab navigation shown after login.
+  - Tabs: Home, Bookings (with badge), Account.
+*/
+
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
   AntDesign,
@@ -5,6 +11,7 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+
 import HomeStack from "../stacks/HomeStack";
 import BookingsStack from "../stacks/BookingsStack";
 import AccountStack from "../stacks/AccountStack";
@@ -13,13 +20,16 @@ import { useApp } from "../../context/AppContext";
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs() {
-  const { bookings } = useApp(); // 👈 from context
+  const { bookings } = useApp(); // total bookings for badge
   const badge = bookings?.length ? bookings.length : undefined;
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: "#2f6f6f",
+
+        // Default icon mapping if not overridden
         tabBarIcon: ({ color, size }) => {
           const map = {
             HomeStack: "home",
@@ -30,6 +40,7 @@ export default function MainTabs() {
         },
       })}
     >
+      {/* Home */}
       <Tab.Screen
         name="HomeTab"
         component={HomeStack}
@@ -40,6 +51,8 @@ export default function MainTabs() {
           ),
         }}
       />
+
+      {/* Bookings */}
       <Tab.Screen
         name="BookingsTab"
         component={BookingsStack}
@@ -48,9 +61,11 @@ export default function MainTabs() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar" color={color} size={size} />
           ),
-          tabBarBadge: badge,
+          tabBarBadge: badge, // shows number of bookings
         }}
       />
+
+      {/* Account */}
       <Tab.Screen
         name="AccountTab"
         component={AccountStack}

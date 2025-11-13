@@ -1,8 +1,10 @@
 /*
-LoginScreen.js
-- Local-only login with email + password
-- Link to Register
+  screens/LoginScreen.js
+  - Simple local login (email and password).
+  - Validates format only; no real backend.
+  - Link to Register screen.
 */
+
 import { useState, useMemo } from "react";
 import {
   Text,
@@ -17,6 +19,7 @@ import { useToast } from "../components/Toast";
 import { useApp } from "../context/AppContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// basic email check
 const emailOk = (e) => /\S+@\S+\.\S+/.test(e ?? "");
 
 export default function LoginScreen() {
@@ -24,21 +27,25 @@ export default function LoginScreen() {
   const { login } = useApp();
   const { show } = useToast();
 
+  // form state
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState(""); // ✅ add password
+  const [password, setPassword] = useState("");
 
+  // enable button if fields look valid
   const canSubmit = useMemo(
     () => emailOk(email) && password.length >= 1,
     [email, password]
   );
 
+  // handle login
   const onLogin = async () => {
     try {
       await login({ email, password });
       show("Welcome back!");
     } catch (e) {
+      // Simple demo-mode checks
       if (e?.code === "NOT_FOUND") {
-        Alert.alert("No account", "We couldn't find that email. Create one?", [
+        Alert.alert("No account", "We couldn't find that email.", [
           { text: "Cancel", style: "cancel" },
           {
             text: "Register",
@@ -81,14 +88,15 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="••••••••"
+            secureTextEntry
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
             returnKeyType="done"
             onSubmitEditing={onLogin}
           />
         </View>
 
+        {/* Login button */}
         <Pressable
           onPress={onLogin}
           disabled={!canSubmit}
@@ -97,6 +105,7 @@ export default function LoginScreen() {
           <Text style={styles.btnText}>Log in</Text>
         </Pressable>
 
+        {/* Go to Register */}
         <Pressable
           onPress={() => nav.navigate("Register", { email })}
           style={{ marginTop: 12 }}
@@ -114,6 +123,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fafafa" },
   wrap: { flex: 1, padding: 20, gap: 10 },
   h1: { fontSize: 22, fontWeight: "800" },
+
   field: { gap: 6 },
   label: { fontWeight: "700", color: "#222" },
   input: {
@@ -124,6 +134,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
   },
+
   btn: {
     marginTop: 8,
     backgroundColor: "#2f6f6f",

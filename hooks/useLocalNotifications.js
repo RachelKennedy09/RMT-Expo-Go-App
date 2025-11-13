@@ -1,18 +1,15 @@
 // hooks/useLocalNotifications.js
-
-// WHAT: A custom React hook that encapsulates local notifications logic.
-// WHY: Keeps App.js and screens clean; gives reusable functions.
-// WORKS IN: Expo Go (local notifications only).
+// Notes:
+// - Handles local notification permissions + scheduling.
+// - Exports helpers for test notifications + booking reminders.
 
 import * as Notifications from "expo-notifications";
 import { useEffect, useCallback } from "react";
 import { Platform } from "react-native";
 
-// Show banners/lists by default when a notification fires 
+// Default notification display settings
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    // Deprecated: shouldShowAlert
-    // Use shouldShowBanner (iOS) and shouldShowList (iOS notification center)
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: true,
@@ -21,46 +18,44 @@ Notifications.setNotificationHandler({
 });
 
 export function useLocalNotifications() {
-  // one time ask permission and setup Android channel
+  // Ask permission + create Android channel once
   useEffect(() => {
     (async () => {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== "granted") {
-        console.log("Notification permission not granted (user declined).");
+        console.log("Notification permission not granted.");
       }
 
-      //Android requires a notification channel to show notifications.
       if (Platform.OS === "android") {
         await Notifications.setNotificationChannelAsync("default", {
-          name: "default",
+          name: "Default",
           importance: Notifications.AndroidImportance.DEFAULT,
-          //sound, vibration, etc. customized here
         });
       }
     })();
   }, []);
 
-  // Helper to schedule a notification in N seconds.
+  // Notification after N seconds (used by test button)
   const scheduleInSeconds = useCallback(async (seconds = 5, override = {}) => {
     return Notifications.scheduleNotificationAsync({
       content: {
-        title: "Test notification",
-        body: `Firing in ${seconds}s`,
+        title: "Notification",
+        body: `Fires in ${seconds}s`,
         ...override,
       },
       trigger: { seconds },
     });
   }, []);
 
-  // Schedule specific Date (e.g., 10 min before a booking time).
+  // Notification at exact date-time (used by “Remind me 10 min before”)
   const scheduleAt = useCallback(async (date, override = {}) => {
     if (!(date instanceof Date) || isNaN(+date)) {
       throw new Error("Invalid Date passed to scheduleAt()");
     }
-    const now = new Date();
-    if (date <= now) {
-      throw new Error("Chosen time is in the past");
+    if (date <= new Date()) {
+      throw new Error("Cannot schedule a notification in the past.");
     }
+
     return Notifications.scheduleNotificationAsync({
       content: {
         title: "Reminder",
@@ -71,8 +66,7 @@ export function useLocalNotifications() {
     });
   }, []);
 
-  // onReceive: fires when a notification arrives in foreground.
-  // onRespond: fires when user taps the notification.
+  // Optional: register listeners (foreground + tapping)
   const addListeners = useCallback((onReceive, onRespond) => {
     const sub1 = Notifications.addNotificationReceivedListener(
       onReceive ?? (() => {})
@@ -80,12 +74,12 @@ export function useLocalNotifications() {
     const sub2 = Notifications.addNotificationResponseReceivedListener(
       onRespond ?? (() => {})
     );
+
     return () => {
       sub1.remove();
       sub2.remove();
     };
   }, []);
 
-  // Expose the 3 helpers
   return { scheduleInSeconds, scheduleAt, addListeners };
 }

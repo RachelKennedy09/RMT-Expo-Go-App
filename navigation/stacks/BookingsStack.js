@@ -1,7 +1,7 @@
 /*
-navigation/BookingsStack.js
-Notes:
-- Placeholder list/details flow to satisfy tabs structure.
+  BookingsStack.js
+  - Stack for the Bookings tab.
+  - Shows the list of bookings -> details for a selected booking.
 */
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -13,11 +13,14 @@ const Stack = createNativeStackNavigator();
 export default function BookingsStack() {
   return (
     <Stack.Navigator>
+      {/* List of all user bookings */}
       <Stack.Screen
         name="BookingsList"
         component={BookingsListScreen}
         options={{ title: "My Bookings" }}
       />
+
+      {/* Detailed view for a single booking */}
       <Stack.Screen
         name="BookingDetails"
         component={BookingDetailsScreen}

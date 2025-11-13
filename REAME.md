@@ -1,34 +1,39 @@
 - update on read me
 - 1. shortened my BookingScreen.js file as it was 350 lines of code and learned that we should separate those types of files into other files to make it less complex and easier to read for professor or developers. This really helped open my eyes to exporting functions and how to convert them into another file. Was 390 lines, updated to 300 lines. I extracted the input formatting and validation into a shared utils file to keep the screen component lean and focused on UI and flow.
-
-
+- 2. Kept doc notes clean and short instead of too detailed, keeping line of code shortened and straight to the point.
+- 3. Please note: Rocky Mountain Tails is not a typo - it is a play on words!
 
 # 🐾 **Rocky Mountain Tails (Expo Mobile App)**
 
-A modern, mobile-first dog-walking app built with **React Native** and **Expo SDK 54**, demonstrating full navigation structure, state management, local notifications, and thoughtful UX design for real-world usability.
+A modern, mobile-first dog-walking app built with **React Native** and **Expo SDK 54**, demonstrating structured navigation, modular state management, geolocation filterting, local notifications, and polished mobile UX patterns.
+
+Please **Note**: "Rocky Montain Tails" is not a typo - it is a play on words!
 
 ---
 
-## 📘 Table of Contents
+# **Table of Contents**
 
 - [🐾 **Rocky Mountain Tails (Expo Mobile App)**](#-rocky-mountain-tails-expo-mobile-app)
-  - [📘 Table of Contents](#-table-of-contents)
+- [**Table of Contents**](#table-of-contents)
   - [Overview](#overview)
   - [App Flow (Routing Graph)](#app-flow-routing-graph)
   - [Features](#features)
     - [**Booking Form**](#booking-form)
-    - [**Local Notifications (Expo Notifications)**](#local-notifications-expo-notifications)
-    - [**Reset Demo Data**](#reset-demo-data)
-    - [**Authentication (Demo Mode)**](#authentication-demo-mode)
-      - [Future Improvements](#future-improvements)
+  - [**Nearby Walkers + Distance Detection**](#nearby-walkers--distance-detection)
+    - [**Detect Huge Distances**](#detect-huge-distances)
+    - [**Local Notifications**](#local-notifications)
+  - [**Reset Demo Data**](#reset-demo-data)
+  - [**Authentication (Demo Mode)**](#authentication-demo-mode)
+    - [Future Improvements](#future-improvements)
     - [**Like / Favorite a Walker**](#like--favorite-a-walker)
   - [Design Principles](#design-principles)
   - [Learning \& Development Notes](#learning--development-notes)
-    - [Challenges \& Solutions](#challenges--solutions)
+    - [Key Improvements \& Lessons](#key-improvements--lessons)
   - [How to Run \& Test](#how-to-run--test)
     - [Prerequisites](#prerequisites)
-    - [Run the project (Expo For App)](#run-the-project-expo-for-app)
-  - [Web Deployment (Expo for Web)](#web-deployment-expo-for-web)
+    - [Run on Mobile (Expo Go)](#run-on-mobile-expo-go)
+    - [Try these Features](#try-these-features)
+  - [Running on Web](#running-on-web)
     - [How to Run on the Web](#how-to-run-on-the-web)
   - [Tech Stack](#tech-stack)
   - [Future Improvements](#future-improvements-1)
@@ -39,16 +44,22 @@ A modern, mobile-first dog-walking app built with **React Native** and **Expo SD
 
 ## Overview
 
-Rocky Mountain Tails is a mobile app designed to simulate a real dog-walking business experience.  
-Users can log in, register, book walks with available walkers/nearby walkers, view their bookings, receive **local reminder notifications**, and manage their profile through the **Account tab**.
+Rocky Mountain Tails simulates a real dog-walking service based out of Banff and Lake Louise, allowing users to:
 
-The project demonstrates:
+- Register or log in
+- Browse and “favorite” walkers
+- Toggle **Nearby Only** using real GPS
+- Book dog walks
+- Receive **10-minute-before** local reminders
+- Manage profile & developer tools from the Account tab
 
-- Clean navigation using **RootNavigator** with an **AuthStack** and **Tab Navigator**
-- Organized, modular screen components
-- Mobile-first interaction patterns (keyboard handling, safe areas, pressable UI)
-- Local data persistence via **AsyncStorage**
-- Functional demo authentication and reminder notifications
+The project highlights:
+
+- Clean navigation using **RootNavigator -> AuthStack/MainTabs -> Stack Screens**
+- Modular architecture across screens, hooks, utils, and context
+- Real geolocation + distance math
+- Local persistence via AsyncStorage
+- Notifications using **expo-notifications**
 
 ---
 
@@ -68,7 +79,7 @@ The project demonstrates:
     - **AccountStack**
       - AccountScreen _(login state, logout, notifications, reset demo data)_
 
-This architecture mirrors real production navigation:
+This mirrors real-world app structure: an authentication layer, post-login tab navigation, and nested page flows.
 
 - **RootNavigator** decides if a user is logged in or not.
 - **AuthStack** handles Login and Register routes.
@@ -81,84 +92,105 @@ This architecture mirrors real production navigation:
 ### **Booking Form**
 
 - Users can schedule walks by selecting a date, time, duration, and dog name.
-- Form auto-formats inputs:
-  - Date → automatic dashes (`YYYY-MM-DD`)
-  - Time → automatic colons (`HH:mm`)
-- Validates fields before submission.
-- Uses **KeyboardAvoidingView** for smooth UX (keyboard no longer blocks inputs).
-- Displays success toast messages (Android) after booking creation.
+- Auto-formatted inputs:
+  - `YYYY-MM-DD`
+  - `HH:mm`
+- Validation before submission
+- Android **Toast** feedback
+- Smarter keyboard handling with `KeyboardAvoidingView`
+- **NOTE**: To reduce complexity, the BookingScreen was refactored from **390 lines → ~300 lines** by extracting all input/validation logic into a shared `bookingDateUtils.js` file.
 
-### **Local Notifications (Expo Notifications)**
+## **Nearby Walkers + Distance Detection**
 
-- Integrated **expo-notifications** with full permission handling.
-- Works on **iPhone and Android** in **Expo Go** (no EAS build required).
-- Adds “Remind me 10 min before” button on BookingScreen to schedule a reminder.
-- Includes a **Test Notification** button under Account for demonstration.
-- Updated to the latest Expo API (`shouldShowBanner` / `shouldShowList`).
+Walkers include real coordinates in Banff/Lake Louise.  
+When the user taps **📍 Use My Location**, the app:
 
-### **Reset Demo Data**
+1. Requests permissions
+2. Retrieves device coordinates
+3. Reverse-geocodes city/region
+4. Filters walkers within a **25 km radius**
 
-- “Reset Demo Data” button on Account page clears AsyncStorage:
-  - `@rmt/walkers`
-  - `@rmt/bookings`
-  - `@rmt/lastSelection`
-- Allows quick re-seeding of demo walkers without reinstalling the app.
-- Hidden in production using `__DEV__` so it’s only visible during development.
+### **Detect Huge Distances**
 
-### **Authentication (Demo Mode)**
+If the user is extremely far away (e.g., Ottawa → Banff), the app displays:
 
-For demonstration purposes, the login screen does **not** perform real credential validation.  
-Any email and password combination logs the user in and displays “Welcome back.”
+> “No walkers found within 25 km. Rocky Mountain Tails walkers are based around Banff / Lake Louise, so this is expected if you're far away.”
 
-This simulates an authentication flow to demonstrate:
+This ensures the feature behaves logically for testers outside Alberta.
 
-- Navigation through RootNavigator → MainTabs
-- Form handling & basic validation
-- Logged-in state persistence via context
+### **Local Notifications**
 
-#### Future Improvements
+Implemented using **expo-notifications**:
 
-In a production version, this flow would connect to a backend service (e.g., **Node.js + MongoDB**, **Firebase Auth**, or **Appwrite**) to securely verify user credentials.
+- “Remind me 10 min before” button on BookingScreen
+- Test Notification button under Account
+- Updated to newest Expo API (`shouldShowBanner`, `shouldShowList`)
+- Works inside **Expo Go** (no custom build needed)
+
+## **Reset Demo Data**
+
+Located under Account tab. Clears all stored data:
+
+- `@rmt/walkers`
+- `@rmt/bookings`
+- `@rmt/lastSelection`
+
+In a real production build, this button would be hidden.
+
+In Expo Go, **DEV** is always true, which means
+the button is intentionally visible so the instructor can test resets during evaluation.
+
+## **Authentication (Demo Mode)**
+
+Login/Register does **not** validate credentials.  
+Any email + password signs the user in.
+
+This demonstrates:
+
+- Navigation flow
+- Form handling
+- Logged-in state persistence
+
+### Future Improvements
+
+Would integrate with:
+
+- MongoDB + Express
+- Firebase Auth
+- Appwrite
 
 ### **Like / Favorite a Walker**
 
-- Each walker card includes a **heart** icon that users can tap to “like” or “favorite” a walker.
-- The heart toggles between **red outline** and **grey outline** states for visual feedback.
-- Favorites are saved locally using **AsyncStorage**, allowing the user’s liked walkers to persist between app sessions.
-- This feature demonstrates:
-  - Local state updates for individual walker components
-  - Interactive UI handling with `useState`
-  - Real-time visual feedback and persistence in a mobile environment
+Every walker card includes a heart icon. Favorites:
+
+- Toggle instantly (❤️red outline / 🤍 grey outline)
+- Persist using AsyncStorage
+- Update UI in real time
 
 ---
 
 ## Design Principles
 
-The app follows mobile-specific design principles: bottom-tab navigation for thumb reachability, safe-area padding for notched screens, large touch targets, and offline caching with AsyncStorage to support mobile use cases.
-
-UI improvements added during development:
-
-- Adjusted `KeyboardAvoidingView` for cross-platform consistency.
-- Added **Toast notifications** for Android user feedback.
-- Used consistent color palette across screens (green, white, earthy tones).
-- Separated logic into **context**, **hooks**, and **screens** for clarity.
+- Bottom-tab navigation for thumb reachability
+- Safe-area padding for notched screens
+- Large, accessible touch targets
+- AsyncStorage caching for offline stability
+- Consistent styling and component structure
+- Short, beginner-friendly doc notes across all files
 
 ---
 
 ## Learning & Development Notes
 
-### Challenges & Solutions
+### Key Improvements & Lessons
 
-| Challenge                              | Solution / Learning Outcome                                                                                |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Started project without `@latest` flag | Re-initialized with `create-expo-app@latest` to ensure SDK 54 compatibility and smoother peer dependencies |
-| Needed deeper app structure            | Switched to **Tab Navigator** mid-project to support multiple stacks                                       |
-| Keyboard overlapped form fields        | Implemented `KeyboardAvoidingView` + dismiss gesture                                                       |
-| Date/time input formatting             | Created custom `formatDateInput()` & `formatTimeInput()` helpers                                           |
-| Android feedback missing               | Implemented **Toast** for success messages                                                                 |
-| Needed reminders                       | Learned **expo-notifications**, error handling, and scheduling                                             |
-| Re-seeding demo data                   | Added “Reset Demo Data” developer button using AsyncStorage                                                |
-| Authentication realism                 | Added `AuthStack` with Login/Register routes and mock validation                                           |
+- Restarted project using `create-expo-app@latest` for clean dependency management
+- Adopted **Tab Navigation** for realistic mobile app flow
+- Shortened BookingScreen by extracting logic into shared utils
+- Learned how to separate UI from business logic
+- Implemented geolocation + distance calculations
+- Added local notifications with scheduling and permission handling
+- Wrote clean, concise documentation for every component
 
 ---
 
@@ -170,46 +202,46 @@ UI improvements added during development:
 - Expo CLI (`npm install -g expo-cli`)
 - **Expo Go** app on your iPhone or Android device
 
-### Run the project (Expo For App)
+### Run on Mobile (Expo Go)
 
-1. git clone https://github.com/RachelKennedy09/RMT-Expo-Go-App.git
-
+- git clone https://github.com/RachelKennedy09/RMT-Expo-Go-App.git
 - cd RMT-Expo-Go-App
 - npm install
 - npx expo start
 - Scan the QR code in Expo Go.
 
-2. Testing the Features
+### Try these Features
 
-- Login / Register
-- Use any email and password.
+1. Login/Register
 
-3. You’ll be taken to the Home tab and see “Welcome back.” (Demo mode/Beginner App)
+- Any credentials work (demo mode)
 
-4. Book a Walk
+2. Nearby Walkers
 
-- Open any walker profiles from Home tab.
-- Enter valid date/time/duration/dog name.
-- Press Create Booking.
-- Success alert + toast appear.
+- Tap “Use My Location”
+- Toggle “Nearby Only”
 
-5. Reminders
+3. Book a Walk
 
-- After booking, tap Remind me 10 min before.
-- A local notification will appear after the correct delay (or in 3 s for test mode).
+- Fill form -> Create booking
 
-6. Account Tab
+4. Reminders
 
-- Press Test Notification -> banner appears in ~3 s.
-- Press Reset Demo Data (dev-only) -> clears AsyncStorage; restart app to reseed walkers.
+- Book a walk about 11 mins from your current time.
+- Tap “Remind me 10 min before” and notice the notification.
 
-7. Bookings Tab
+5. Account Tab
 
-- Displays created bookings; badge updates with total count.
+- Test Notification
+- Reset Demo Data
+
+6. Bookings Tab
+
+- Auto-updating badge count
 
 ---
 
-## Web Deployment (Expo for Web)
+## Running on Web
 
 In addition to running natively on iOS and Android, this project is configured to run on the **web** using Expo’s web renderer (React DOM).  
 This allows the developer/professor to open and test the app in a browser without needing a mobile device.
@@ -232,15 +264,19 @@ This allows the developer/professor to open and test the app in a browser withou
 
 ## Tech Stack
 
-- **Framework**: React Native + Expo SDK 54
-- **Platform Support**: Android | iOS | Web (via expo for web)
-- **Language**: JavaScript (ES Modules)
-- **Navigation**: @react-navigation/native, Tab + Stack Navigators
-- **State**: Custom useApp() Context
-- **Storage**: AsyncStorage
-- **Notifications**: expo-notifications
-- **UI**: React Native core components + custom styles
-- **Dev Tools**: Expo Go, Metro Bundler, VS Code
+- React Native, Expo SDK 54
+
+- React Navigation (Tabs + Stacks)
+
+- expo-notifications
+
+- expo-location
+
+- AsyncStorage
+
+- Custom hooks, context, and utilities
+
+- Expo Go + Metro Bundler
 
 ---
 
@@ -248,9 +284,9 @@ This allows the developer/professor to open and test the app in a browser withou
 
 - Real backend authentication (JWT + MongoDB)
 - Persisted cloud bookings (MongoDB Atlas)
-- Push notifications via Expo Push API
-- Profile photos and dog avatars
-- Theming and dark mode
+- Server-based push notifications
+- Profile & dog avatar uploads
+- Theming + dark mode support
 
 ---
 
@@ -260,13 +296,13 @@ Midway through, I restarted the project using create-expo-app@latest to learn pr
 
 Switching to Tab Navigation helped me understand nested navigators and user flow design.
 
-Implementing notifications and AsyncStorage taught me real-world mobile patterns.  
-After building the mobile app, I challenged myself to add web support so the app could also run in a browser.
+Extracting BookingScreen logic taught me the importance of separation of concerns.
 
-Learning Expo for Web helped me understand how React Native bridges to React DOM, and how to adapt layouts for multi-platform deployment.  
-Being able to demo my app both on phone and browser gives my project professional versatility.
+Implementing geolocation, distance calculations, and notifications gave me real-world mobile development experience.
 
-Overall, this project represents my growth from early Expo warnings to a smooth, well-structured React Native app that feels real.
+Adding Expo Web allowed me to demo the app both on my phone and browser, making the project more polished and flexible.
+
+This project represents my growth into a structured, detail-oriented mobile developer.
 
 ---
 

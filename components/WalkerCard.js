@@ -1,8 +1,8 @@
 /*
-components/WalkerCard.js
-Notes:
-- Reusable pressable card for a walker row.
-- Includes favorite heart (toggles without triggering onPress).
+  components/WalkerCard.js
+  - Reusable card for each walker in the list.
+  - Shows photo, name, rating, price, distance (optional), and bio preview.
+  - Includes a favorite heart that toggles without triggering the main onPress().
 */
 
 import { View, Text, Image, StyleSheet, Pressable } from "react-native";
@@ -29,13 +29,15 @@ export default function WalkerCard({
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
       onPress={onPress}
     >
+      {/* Profile photo */}
       <Image source={{ uri: photo }} style={styles.avatar} resizeMode="cover" />
 
       <View style={{ flex: 1, gap: 6 }}>
-        {/* Top row: name + availability + heart */}
+        {/* Row: name + availability + heart */}
         <View style={styles.rowBetween}>
           <View style={styles.row}>
             <Text style={styles.name}>{name}</Text>
+
             <View
               style={[
                 styles.badge,
@@ -48,6 +50,7 @@ export default function WalkerCard({
             </View>
           </View>
 
+          {/* Favorite heart (stops press bubbling) */}
           <Pressable
             onPress={(e) => {
               e.stopPropagation();
@@ -59,22 +62,23 @@ export default function WalkerCard({
               name="heart"
               size={20}
               color={favorite ? "#e11d48" : "#bbb"}
-              fill={favorite ? "#e11d48" : "none"} // makes it filled or outlined
+              fill={favorite ? "#e11d48" : "none"}
             />
           </Pressable>
         </View>
 
-        {/* Meta row */}
+        {/* Meta row: stars, walks, price, distance */}
         <View style={styles.row}>
           <Text style={styles.rating}>{stars}</Text>
           <Text style={styles.muted}> · {walks} walks</Text>
           <Text style={styles.muted}> · ${price}/hr</Text>
+
           {typeof distanceKm === "number" && (
             <Text style={styles.muted}> · {distanceKm.toFixed(1)} km</Text>
           )}
         </View>
 
-        {/* Bio */}
+        {/* Short bio preview */}
         {bio ? (
           <Text style={styles.bio} numberOfLines={2}>
             {bio}
@@ -101,22 +105,28 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   pressed: { opacity: 0.9 },
+
   avatar: {
     width: 64,
     height: 64,
     borderRadius: 32,
     backgroundColor: "#eee",
   },
+
   row: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 6 },
   rowBetween: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
+
   name: { fontSize: 16, fontWeight: "700", color: "#111" },
+
   badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },
   badgeText: { color: "#fff", fontWeight: "700", fontSize: 12 },
+
   rating: { color: "#e6b800", fontSize: 14 },
   muted: { color: "#666", fontSize: 13 },
+
   bio: { color: "#444", marginTop: 6 },
 });

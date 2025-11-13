@@ -1,9 +1,9 @@
 /*
-App.js
-Notes:
-- Root entry of the app.
-- Wraps everything with global providers (App + Toast).
-- RootNavigator decides: show Login (AuthStack) or MainTabs.
+  App.js
+  - Root entry point of the mobile app.
+  - Wraps everything in global providers (AppContext + Toast).
+  - Loads RootNavigator, which decides: Auth screens or MainTabs.
+  - Includes a small test notification button (dev/demo only).
 */
 
 import { StatusBar } from "expo-status-bar";
@@ -14,9 +14,12 @@ import { useLocalNotifications } from "./hooks/useLocalNotifications";
 import { Pressable, Text } from "react-native";
 
 export default function App() {
-  const { scheduleInSeconds } = useLocalNotifications(); // triggers persmission prompt(first run)
+  // Requests notification permission on first app open.
+  const { scheduleInSeconds } = useLocalNotifications();
+
   return (
     <>
+      {/* Global state + toast UI available to all screens */}
       <AppProvider>
         <ToastProvider>
           <StatusBar style="dark" />
@@ -24,7 +27,7 @@ export default function App() {
         </ToastProvider>
       </AppProvider>
 
-      {/* //Test button for Gurneesh/user to verify in 3 seconds */}
+      {/* Dev-only: quick test to fire a notification in 3 seconds */}
       <Pressable
         onPress={() =>
           scheduleInSeconds(3, {
@@ -48,3 +51,4 @@ export default function App() {
     </>
   );
 }
+

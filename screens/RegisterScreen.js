@@ -1,7 +1,8 @@
 /*
-RegisterScreen.js
-- Create a local account (name, email, dog name)
-- Auto-logins after registration
+  screens/RegisterScreen.js
+  - Create a local demo account (name, email, password, optional dog name).
+  - Prefills email/name if passed from Login.
+  - Uses local-only auth; no real backend.
 */
 
 import { useState, useMemo, useEffect } from "react";
@@ -18,30 +19,33 @@ import { useToast } from "../components/Toast";
 import { useApp } from "../context/AppContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// simple email validator
 const emailOk = (e) => /\S+@\S+\.\S+/.test(e ?? "");
 
 export default function RegisterScreen() {
   const route = useRoute();
   const { register } = useApp();
   const { show } = useToast();
-  const { loginWithPassword } = useApp();
 
+  // form fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [dogName, setDogName] = useState("");
   const [password, setPassword] = useState("");
 
-  // prefill from link (if navigating from login)
+  // prefill from Login screen if provided
   useEffect(() => {
     if (route.params?.email) setEmail(route.params.email);
     if (route.params?.name) setName(route.params.name);
   }, [route.params]);
 
+  // enable button when fields look valid
   const canSubmit = useMemo(
     () => name.trim().length > 0 && emailOk(email) && password.length >= 4,
     [name, email, password]
   );
 
+  // create local account
   const onRegister = async () => {
     try {
       await register({ name, email, password, dogName });
@@ -62,6 +66,7 @@ export default function RegisterScreen() {
       <View style={styles.wrap}>
         <Text style={styles.h1}>Create account</Text>
 
+        {/* Name */}
         <View style={styles.field}>
           <Text style={styles.label}>Name *</Text>
           <TextInput
@@ -73,6 +78,7 @@ export default function RegisterScreen() {
           />
         </View>
 
+        {/* Email */}
         <View style={styles.field}>
           <Text style={styles.label}>Email *</Text>
           <TextInput
@@ -86,19 +92,21 @@ export default function RegisterScreen() {
           />
         </View>
 
+        {/* Password */}
         <View style={styles.field}>
           <Text style={styles.label}>Password *</Text>
           <TextInput
             style={styles.input}
             placeholder="At least 4 characters"
+            secureTextEntry
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
             returnKeyType="done"
             onSubmitEditing={onRegister}
           />
         </View>
 
+        {/* Dog name (optional) */}
         <View style={styles.field}>
           <Text style={styles.label}>Dog name (optional)</Text>
           <TextInput
@@ -111,6 +119,7 @@ export default function RegisterScreen() {
           />
         </View>
 
+        {/* Submit */}
         <Pressable
           onPress={onRegister}
           disabled={!canSubmit}
@@ -129,6 +138,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fafafa" },
   wrap: { flex: 1, padding: 20, gap: 10 },
   h1: { fontSize: 22, fontWeight: "800" },
+
   field: { gap: 6 },
   label: { fontWeight: "700", color: "#222" },
   input: {
@@ -139,6 +149,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
   },
+
   btn: {
     marginTop: 8,
     backgroundColor: "#2f6f6f",
@@ -147,5 +158,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btnText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+
   hint: { color: "#666", marginTop: 10 },
 });

@@ -1,5 +1,14 @@
 // data/walkers.js
-// Notes: Seed data for offline demo; real app will load from API or MongoDB.
+// ------------------------------------------------------------
+// Seed data for the offline demo version of the app.
+// In a real production build, walkers would come from:
+//   • a backend API (Node.js/Express)
+//   • MongoDB Atlas
+//   • or another cloud data source
+//
+// This file provides static walkers so the app works fully
+// without internet, backend, or authentication.
+// ------------------------------------------------------------
 
 const WALKERS_SEED = [
   {
@@ -12,6 +21,8 @@ const WALKERS_SEED = [
     bio: "Trail runner & dog whisperer. Loves long alpine walks.",
     isAvailable: true,
     favorite: false,
+
+    // Coordinates around Banff / Lake Louise area
     lat: 51.1784,
     lng: -115.5708,
   },
@@ -25,6 +36,7 @@ const WALKERS_SEED = [
     bio: "Gentle training approach; specializes in high-energy dogs.",
     isAvailable: false,
     favorite: true,
+
     lat: 51.4254,
     lng: -116.1773,
   },
@@ -38,6 +50,7 @@ const WALKERS_SEED = [
     bio: "Early-morning walks and obedience games.",
     isAvailable: true,
     favorite: false,
+
     lat: 51.0892,
     lng: -115.3596,
   },

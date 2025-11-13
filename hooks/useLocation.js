@@ -1,25 +1,22 @@
-/*
-hooks/useLocation.js
-Notes:
-- Requests foreground permission, fetches current coords once,
-and optional reverse geocode -> { city, region, country }.
-- Call getLocation() when the user taps "Use my location".
- */
+/* hooks/useLocation.js
+- Grabs device location once (coords + optional reverse geocode).
+- Used when tapping “📍 Use My Location” in HomeScreen.
+*/
 
 import * as Location from "expo-location";
 
 export async function getLocationOnce({ withAddress = true } = {}) {
-  // Ask for permission
+  // Ask for foreground permission
   const { status } = await Location.requestForegroundPermissionsAsync();
   if (status !== "granted") {
     return { error: "Location permission denied." };
   }
 
-  // Get current position ( balanced accurace = faster and battery-friendly)
+  // Get current position (balanced = faster + battery friendly)
   const pos = await Location.getCurrentPositionAsync({
     accuracy: Location.Accuracy.Balanced,
-    maximumAge: 5_000, //accept a recent cached reading (ms)
-    timeout: 10_000, //fali fast if GPS is slow
+    maximumAge: 5000, // accept recent cached reading (ms)
+    timeout: 10000, // fail fast if GPS is slow
   });
 
   const coords = {
@@ -28,7 +25,7 @@ export async function getLocationOnce({ withAddress = true } = {}) {
     accuracy: pos.coords.accuracy,
   };
 
-  //Optional reverse geocode to a human place
+  // Optional reverse geocoding -> readable city/region/country
   let place = null;
   if (withAddress) {
     try {
@@ -36,6 +33,7 @@ export async function getLocationOnce({ withAddress = true } = {}) {
         latitude: coords.lat,
         longitude: coords.lng,
       });
+
       if (addr) {
         place = {
           city: addr.city || addr.subregion || null,

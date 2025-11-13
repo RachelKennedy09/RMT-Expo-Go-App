@@ -1,8 +1,8 @@
 /*
   screens/BookingScreen.js
-  Booking form: date, time, duration, dog name, notes + reminder option.
+  - Lets the user book a walk with a selected walker.
+  - Handles form state, validation, and scheduling a local reminder.
 */
-
 import {
   View,
   Text,
@@ -41,7 +41,7 @@ export default function BookingScreen() {
   const { show } = useToast();
   const { scheduleAt } = useLocalNotifications();
 
-  // Resolve active walker (param → object → lastSelection)
+  // Resolve active walker (route params -> lastSelection fallback)
   const walkerId =
     route.params?.walkerId ??
     route.params?.walker?.id ??
@@ -53,6 +53,7 @@ export default function BookingScreen() {
     return walkers.find((w) => w.id === walkerId) ?? null;
   }, [walkers, walkerId]);
 
+  // Remember last selected walker in context (for convenience)
   useEffect(() => {
     if (selected?.id) markSelectedWalker(selected.id);
   }, [selected?.id, markSelectedWalker]);
@@ -66,6 +67,7 @@ export default function BookingScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Basic validation gate for enabling the submit button
   const canSubmit = useMemo(() => {
     if (!selected?.id) return false;
     if (!dogName.trim()) return false;
@@ -75,6 +77,7 @@ export default function BookingScreen() {
     return true;
   }, [selected?.id, dogName, dateStr, timeStr, duration]);
 
+  // Create and save booking in context and show feedback
   const onSubmit = async () => {
     setError("");
     if (!canSubmit) {
@@ -107,6 +110,7 @@ export default function BookingScreen() {
     }
   };
 
+  // Schedule a local notification 10 minutes before the chosen time
   const handleReminder = async () => {
     const bookingStart = getBookingStartDate(dateStr, timeStr);
     if (!bookingStart || isNaN(+bookingStart)) {
@@ -126,6 +130,7 @@ export default function BookingScreen() {
     }
   };
 
+  // KeyboardAvoidingView and ScrollView so the form is usable on small screens
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}

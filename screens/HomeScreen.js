@@ -1,11 +1,9 @@
 /*
-screens/HomeScreen.js
-Notes:
-- Main Screen
--integrates mobile geolocation using expo-location.
-- Uses getUserLocation() from context to request and store coordinates/address.
-- Shows a simple "Use My Location" button + current city/region if available.
- */
+  HomeScreen.js
+  - Main landing screen after login.
+  - Shows list of walkers and lets the user filter by nearby distance.
+  - Integrates mobile geolocation via getUserLocation() from context.
+*/
 
 import {
   View,
@@ -29,7 +27,7 @@ export default function HomeScreen() {
   const { walkers, toggleFavorite, userLocation, getUserLocation } = useApp();
   const [nearbyOnly, setNearbyOnly] = useState(false);
 
-  //Handle permission + fetch location
+  // Ask for location permission and store location in context
   const handleUseMyLocation = async () => {
     const res = await getUserLocation();
     if (res?.error) {
@@ -37,12 +35,13 @@ export default function HomeScreen() {
     }
   };
 
-  //Build readable location string
+  // Build readable location string from reverse-geocoded place
   const place = userLocation?.place;
   const readableLocation = place
     ? [place.city, place.region, place.country].filter(Boolean).join(", ")
     : null;
 
+  // Initial loading state while walkers are being fetched
   if (!walkers) {
     return (
       <View style={[styles.wrap, { alignItems: "center" }]}>
@@ -52,8 +51,8 @@ export default function HomeScreen() {
     );
   }
 
-  //Toggle nearby: if turning on and we dont have a location yet, fetch it first
-
+  // Toggle nearby-only filter.
+  // If turning it on and we don't have a location yet, fetch it first.
   async function toggleNearby() {
     if (!nearbyOnly && !userLocation) {
       const res = await getUserLocation();
@@ -62,7 +61,8 @@ export default function HomeScreen() {
     setNearbyOnly((v) => !v);
   }
 
-  //computer visiblelist (filter and sort by distance wh nearbyOnly is on)
+  // Compute visible walker list.
+  // When nearbyOnly is true, filter and sort by distance.
   const visible = useMemo(() => {
     if (!nearbyOnly || !userLocation?.coords) return walkers;
 
@@ -80,6 +80,23 @@ export default function HomeScreen() {
       .filter((w) => w._distanceKm <= RADIUS_KM)
       .sort((a, b) => a._distanceKm - b._distanceKm);
   }, [nearbyOnly, userLocation, walkers]);
+
+  const farFromRockies = useMemo(() => {
+    if (!userLocation?.coords || !walkers?.lenth) return false;
+
+    const here = { lat: userLocation.coords.lat, lng: userLocation.coords.lng };
+
+    let min = Infinity;
+    for (const w of walkers) {
+      const hasCoords = typeof w.lat === "number" && typeof w.lng === "number";
+      if (!hasCoords) continue;
+      const d = distanceKm(here, { lat: w.lat, lng: w.lng });
+      if (d < min) min = d;
+    }
+
+    // If the closest walker is more than 200 km away, assume user is far from Rocky Mountains.
+    return min > 200;
+  }, [userLocation, walkers]);
 
   return (
     <View style={styles.wrap}>
@@ -113,11 +130,12 @@ export default function HomeScreen() {
         renderItem={({ item }) => (
           <WalkerCard
             {...item}
+            // Pass distance if available (used for nearby sorting display)
             distanceKm={
               typeof item._distanceKm === "number"
                 ? item._distanceKm
                 : undefined
-            } // optional
+            }
             onPress={() =>
               navigation.navigate("Booking", { walkerId: item.id })
             }
@@ -127,7 +145,9 @@ export default function HomeScreen() {
         ListEmptyComponent={
           <Text style={{ color: "#666", marginTop: 12 }}>
             {nearbyOnly
-              ? `No walkers found within ${RADIUS_KM} km.`
+              ? farFromRockies
+                ? `No walkers found within ${RADIUS_KM} km. Rocky Mountain Tails walkers are based around Banff / Lake Louise, so this is expected if you're far away.`
+                : `No walkers found within ${RADIUS_KM} km.`
               : "No walkers found."}
           </Text>
         }

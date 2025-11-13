@@ -1,11 +1,10 @@
 /*
-screens/AccountScreen.js
-Notes:
-- Profile + Logout view (no login here).
-- Safe area padding so it doesn’t overlap the clock/notch.
+  screens/AccountScreen.js
+  - Account view after login.
+  - Shows basic profile info, test notification, dev-only reset, and logout.
 */
 
-import { View, Text, StyleSheet, Pressable, Button } from "react-native";
+import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useApp } from "../context/AppContext";
 import { useToast } from "../components/Toast";
@@ -15,13 +14,29 @@ import { useLocalNotifications } from "../hooks/useLocalNotifications";
 export default function AccountScreen() {
   const { user, isLoggedIn, logout } = useApp();
   const { show } = useToast();
-  //notification helper
   const { scheduleInSeconds } = useLocalNotifications();
 
+  // Log out and let RootNavigator switch back to AuthStack
   const onLogout = async () => {
     await logout();
     show("Logged out");
-    // RootNavigator will switch back to AuthStack automatically.
+  };
+
+  // Clear seeded demo data (walkers, bookings, last selection)
+  const resetDemoData = async () => {
+    await AsyncStorage.removeItem("@rmt/walkers");
+    await AsyncStorage.removeItem("@rmt/bookings");
+    await AsyncStorage.removeItem("@rmt/lastSelection");
+
+    Alert.alert("Reset complete", "Restart the app to reload seed walkers.");
+  };
+
+  // Fire a test local notification after 3 seconds
+  const sendTestNotification = () => {
+    scheduleInSeconds(3, {
+      title: "Test Notification 🔔",
+      body: "This was sent from your Account tab!",
+    });
   };
 
   return (
@@ -29,23 +44,9 @@ export default function AccountScreen() {
       <View style={styles.wrap}>
         <Text style={styles.h1}>Account</Text>
 
-        <Button
-          title="Reset demo data"
-          onPress={async () => {
-            await AsyncStorage.removeItem("@rmt/walkers");
-            // optionally also clear bookings etc:
-            // await AsyncStorage.removeItem("@rmt/bookings");
-            // await AsyncStorage.removeItem("@rmt/lastSelection");
-            Alert.alert(
-              "Reset complete",
-              "Restart the app to reload seed walkers."
-            );
-          }}
-        />
-
-        {/* Logged in user information */}
         {isLoggedIn && user ? (
           <>
+            {/* Basic profile card */}
             <View style={styles.card}>
               <Text style={styles.row}>
                 <Text style={styles.bold}>Name: </Text>
@@ -63,32 +64,27 @@ export default function AccountScreen() {
               ) : null}
             </View>
 
+            {/* Test notification button */}
+            <Pressable onPress={sendTestNotification} style={styles.btn}>
+              <Text style={styles.btnText}>Test Notification</Text>
+            </Pressable>
+
+            {/* Dev-only: reset seeded demo data */}
+            {__DEV__ && (
+              <Pressable
+                onPress={resetDemoData}
+                style={[styles.btn, styles.btnNeutral]}
+              >
+                <Text style={styles.btnText}>Reset Demo Data</Text>
+              </Pressable>
+            )}
+
             {/* Logout button */}
             <Pressable
               onPress={onLogout}
               style={[styles.btn, styles.btnDanger]}
             >
               <Text style={styles.btnText}>Log Out</Text>
-            </Pressable>
-
-            {/* Test notification button and styles */}
-            <Pressable
-              onPress={() =>
-                scheduleInSeconds(3, {
-                  title: "Test Notification 🔔",
-                  body: "This was sent from your Account tab!",
-                })
-              }
-              style={{
-                backgroundColor: "#2f6f6f",
-                paddingVertical: 14,
-                borderRadius: 14,
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ color: "#fff", fontWeight: "800", fontSize: 16 }}>
-                Test Notification
-              </Text>
             </Pressable>
           </>
         ) : (
@@ -102,6 +98,7 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fafafa" },
   wrap: { flex: 1, padding: 20, paddingTop: 24, gap: 10 },
+
   h1: { fontSize: 22, fontWeight: "800" },
   sub: { color: "#555" },
 
@@ -123,6 +120,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
   },
+  btnNeutral: { backgroundColor: "#555" },
   btnDanger: { backgroundColor: "#b91c1c" },
+
   btnText: { color: "#fff", fontWeight: "800", fontSize: 16 },
 });

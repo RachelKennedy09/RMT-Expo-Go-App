@@ -1,7 +1,10 @@
 /*
-screens/BookingScreen.js
-Notes: Displays the booking form and selected walker info.
- */
+  screens/BookingsListScreen.js
+  - Shows all saved bookings.
+  - Tap -> open details page.
+  - Long press -> quick delete option.
+*/
+
 import {
   View,
   Text,
@@ -14,6 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useApp } from "../context/AppContext";
 import { useToast } from "../components/Toast";
 
+// Simple shared formatter for readable date/time
 function formatDate(iso) {
   return new Date(iso).toLocaleString();
 }
@@ -23,13 +27,12 @@ export default function BookingsListScreen() {
   const { bookings, deleteBooking } = useApp();
   const { show } = useToast();
 
+  // Empty-state -> no bookings created yet
   if (!bookings || bookings.length === 0) {
     return (
       <View style={styles.wrap}>
         <Text style={styles.h1}>My Bookings</Text>
-        <Text style={styles.sub}>
-          (No bookings yet — create one from Home.)
-        </Text>
+        <Text style={styles.sub}>No bookings yet — create one from Home.</Text>
       </View>
     );
   }
@@ -37,9 +40,11 @@ export default function BookingsListScreen() {
   return (
     <View style={styles.wrap}>
       <Text style={styles.h1}>My Bookings</Text>
+
       <FlatList
         data={bookings}
         keyExtractor={(b) => b.id}
+        contentContainerStyle={{ paddingTop: 10 }}
         renderItem={({ item }) => (
           <Pressable
             style={styles.card}
@@ -72,11 +77,11 @@ export default function BookingsListScreen() {
             </Text>
           </Pressable>
         )}
-        contentContainerStyle={{ paddingTop: 10 }}
       />
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   wrap: { flex: 1, padding: 20, paddingTop: 24, backgroundColor: "#fafafa" },
   h1: { fontSize: 22, fontWeight: "800" },

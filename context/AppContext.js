@@ -1,9 +1,9 @@
 /**
  * context/AppContext.js
- * Notes:
- * - Centralizes all app state (walkers, bookings, user, location).
- * - Loads persisted data if available, otherwise falls back to seed walkers.
- * - Exposes reusable actions (toggleFavorite, getUserLocation, etc.).
+ * - Central place for app state: walkers, bookings, user, and location.
+ * - Loads saved data from AsyncStorage (or falls back to seed walkers).
+ * - Exposes actions for UI: toggleFavorite, createBooking, login, etc.
+ * - Auth is local-only demo auth (no real password checks).
  */
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
@@ -27,7 +27,7 @@ export function AppProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
-  // --- Load persisted state on mount ---
+  // Load any saved data once on mount (walkers, bookings, user, last selection)
   useEffect(() => {
     (async () => {
       try {
@@ -37,7 +37,8 @@ export function AppProvider({ children }) {
           AsyncStorage.getItem(STORAGE_KEYS.BOOKINGS),
           AsyncStorage.getItem(STORAGE_KEYS.USER),
         ]);
-        // start with saved or seed
+
+        // walkers: saved or seed, with a quick sanity check
         let loadedWalkers = w ? JSON.parse(w) : WALKERS_SEED;
 
         const looksOld =
@@ -67,7 +68,7 @@ export function AppProvider({ children }) {
     })();
   }, []);
 
-  // --- Persistence helpers ---
+  // Small helpers to keep state + AsyncStorage in sync
   const persistWalkers = async (next) => {
     setWalkers(next);
     await AsyncStorage.setItem(STORAGE_KEYS.WALKERS, JSON.stringify(next));
@@ -87,9 +88,10 @@ export function AppProvider({ children }) {
     }
   };
 
-  // --- Actions ---
+  // All the mutations / actions the UI can call
   const actions = useMemo(
     () => ({
+      // Toggle the favorite heart for a walker
       toggleFavorite: async (walkerId) => {
         if (!walkers) return;
         const next = walkers.map((w) =>
@@ -98,6 +100,7 @@ export function AppProvider({ children }) {
         await persistWalkers(next);
       },
 
+      // Remember which walker was last selected (for convenience)
       markSelectedWalker: async (walkerId) => {
         const sel = { walkerId, at: Date.now() };
         setLastSelection(sel);
@@ -107,6 +110,7 @@ export function AppProvider({ children }) {
         );
       },
 
+      // Create and save a new booking
       createBooking: async (input) => {
         const id = `${Date.now().toString(36)}-${Math.random()
           .toString(36)
@@ -129,6 +133,7 @@ export function AppProvider({ children }) {
         return booking.id;
       },
 
+      // Lookup helpers for bookings
       getBookingById: (id) => bookings?.find((b) => b.id === id) || null,
 
       deleteBooking: async (id) => {
@@ -143,7 +148,7 @@ export function AppProvider({ children }) {
         await persistBookings(next);
       },
 
-      // --- Geolocation actions ---
+      // Geolocation: one-time fetch + store
       getUserLocation: async () => {
         const res = await getLocationOnce({ withAddress: true });
         if (res.error) return res;
@@ -153,15 +158,26 @@ export function AppProvider({ children }) {
 
       clearUserLocation: () => setUserLocation(null),
 
-      // --- Simple mock auth actions ---
-      register: async ({ name, email }) => {
-        const newUser = { id: `u_${Date.now()}`, name, email };
+      // Local demo auth: register + login just store a user object
+      // NOTE: password is collected in the UI but not persisted in this demo.
+      register: async ({ name, email, dogName }) => {
+        const newUser = {
+          id: `u_${Date.now()}`,
+          name,
+          email,
+          dogName: dogName?.trim() || "",
+        };
         await persistUser(newUser);
         return newUser;
       },
 
+      // In this demo, any email/password logs in successfully.
       login: async ({ email }) => {
-        const existing = { id: `u_${Date.now()}`, name: "Guest", email };
+        const existing = {
+          id: `u_${Date.now()}`,
+          name: "Guest",
+          email,
+        };
         await persistUser(existing);
         return existing;
       },
@@ -173,7 +189,7 @@ export function AppProvider({ children }) {
     [walkers, bookings]
   );
 
-  // --- Context value ---
+  // Final value exposed to the rest of the app
   const value = useMemo(
     () => ({
       walkers,
@@ -190,6 +206,7 @@ export function AppProvider({ children }) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
+// Hook for consuming the app context
 export function useApp() {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error("useApp must be used inside <AppProvider>");

@@ -1,3 +1,9 @@
+/*
+  screens/BookingDetailsScreen.js
+  - Shows details for a single booking.
+  - Allows user to delete the booking from the header button.
+*/
+
 import { View, Text, StyleSheet, Button, Alert } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useLayoutEffect } from "react";
@@ -11,8 +17,10 @@ export default function BookingDetailsScreen() {
   const booking = getBookingById(route.params?.id);
   const { show } = useToast();
 
+  // Configure the header "Delete" button when this screen is focused
   useLayoutEffect(() => {
     if (!booking) return;
+
     navigation.setOptions({
       headerRight: () => (
         <Button
@@ -25,10 +33,7 @@ export default function BookingDetailsScreen() {
                 booking.startISO
               ).toLocaleString()}?`,
               [
-                {
-                  text: "Cancel",
-                  style: "cancel",
-                },
+                { text: "Cancel", style: "cancel" },
                 {
                   text: "Delete",
                   style: "destructive",
@@ -44,8 +49,9 @@ export default function BookingDetailsScreen() {
         />
       ),
     });
-  }, [navigation, booking, deleteBooking]);
+  }, [navigation, booking, deleteBooking, show]);
 
+  // Simple empty state if the booking id was invalid
   if (!booking) {
     return (
       <View style={styles.wrap}>
@@ -55,31 +61,38 @@ export default function BookingDetailsScreen() {
     );
   }
 
+  // Main booking details layout
   return (
     <View style={styles.wrap}>
       <Text style={styles.h1}>Booking Details</Text>
+
       <Text style={styles.row}>
         <Text style={styles.bold}>Walker: </Text>
         {booking.walkerName}
       </Text>
+
       <Text style={styles.row}>
         <Text style={styles.bold}>When: </Text>
         {new Date(booking.startISO).toLocaleString()}
       </Text>
+
       <Text style={styles.row}>
         <Text style={styles.bold}>Duration: </Text>
         {booking.durationMins} min
       </Text>
+
       <Text style={styles.row}>
         <Text style={styles.bold}>Dog: </Text>
         {booking.dogName}
       </Text>
+
       {booking.notes ? (
         <Text style={styles.row}>
           <Text style={styles.bold}>Notes: </Text>
           {booking.notes}
         </Text>
       ) : null}
+
       <Text style={styles.row}>
         <Text style={styles.bold}>Created: </Text>
         {new Date(booking.createdAt).toLocaleString()}
