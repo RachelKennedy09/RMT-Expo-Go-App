@@ -1,9 +1,9 @@
-/**
- * context/AppContext.js
- * - Central place for app state: walkers, bookings, user, and location.
- * - Loads saved data from AsyncStorage (or falls back to seed walkers).
- * - Exposes actions for UI: toggleFavorite, createBooking, login, etc.
- * - Auth is local-only demo auth (no real password checks).
+/*
+context/AppContext.js
+- Central place for app state: walkers, bookings, user, and location.
+- Loads saved data from AsyncStorage (or falls back to seed walkers).
+- Exposes actions for UI: toggleFavorite, createBooking, login, etc.
+- Auth is local-only demo auth (no real password checks).
  */
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
@@ -158,25 +158,27 @@ export function AppProvider({ children }) {
 
       clearUserLocation: () => setUserLocation(null),
 
-      // Local demo auth: register + login just store a user object
-      // NOTE: password is collected in the UI but not persisted in this demo.
-      register: async ({ name, email, dogName }) => {
+      // Local demo auth: register + login just store a user object.
+      // NOTE: password is collected in the UI but never persisted or checked.
+      register: async ({ name, email, password, dogName }) => {
         const newUser = {
           id: `u_${Date.now()}`,
-          name,
-          email,
+          name: name.trim(),
+          email: email.trim(),
           dogName: dogName?.trim() || "",
+          // password is intentionally NOT stored in this demo
         };
         await persistUser(newUser);
         return newUser;
       },
 
       // In this demo, any email/password logs in successfully.
-      login: async ({ email }) => {
+      login: async ({ email, password }) => {
         const existing = {
           id: `u_${Date.now()}`,
           name: "Guest",
-          email,
+          email: email.trim(),
+          // password is ignored on purpose in demo auth
         };
         await persistUser(existing);
         return existing;
